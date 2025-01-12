@@ -24,6 +24,15 @@ Some of this is very specific to my particular server, home network setup, and I
 - https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://www.dell.com/support/manuals/en-us/poweredge-r630-dsms/r630_om_pub/dell-poweredge-r630-system-overview%3Fguid%3Dguid-a743b271-3784-4599-8c90-0fbca035aeb0%26lang%3Den-us&ved=2ahUKEwiO2JzZ_rCEAxXVHjQIHdIyBgwQFnoECA4QAQ&usg=AOvVaw14gsicB1V6nroCDHgMTogF
 - https://www.dell.com/support/manuals/en-us/poweredge-r630-dsms/r630_om_pub/dell-poweredge-r630-system-overview?guid=guid-a743b271-3784-4599-8c90-0fbca035aeb0&lang=en-us
 
+# Network info
+
+## Basic network and machine IP info
+
+- Home gateway: `192.168.1.1`
+- Main development machine `192.168.1.111`
+- `poweredge` server: `192.168.1.200`
+- Router DHCP configured to assign static IPs based on MAC addresses
+
 # Install Ubuntu Desktop LTS
 
 ## Why Ubuntu desktop instead of server?
@@ -58,7 +67,23 @@ Basic steps like language, keyboard layout, etc are omitted. All defaults are as
     - Pick `sda` for bootloader installation (creates ~1GB FAT32 partition)
     - Create 1000GB ext4 partition with mount point of `/` (leaving ~900 GB free for future partitions)
 - Create account
-    - Username: `cwoolley`
+    - Username: `cwoolley` (same as my main dev laptop, so I don't have to specify username for SSH)
     - Computer name: `poweredge`
-- Wait for install to finish, then restart
+- Wait for install to finish, then restart, and wait for reboot and welcome screen
+- Take all defaults and finish
+- From "Show Apps", run software updater and do all updates
+
+# Basic application setup
+
+Use Firefox from Ubuntu GUI as browser
+
+## Nomachine NX
+
+- Download
+    - https://www.nomachine.com
+    - download free edition
+    - Linux DEB amd64
+- Double click downloaded .deb, open with App Center, install
+- On main development machine, install nomachine client, and access via hostname (TODO: document config)
+- 
 
