@@ -28,10 +28,25 @@ Some of this is very specific to my particular server, home network setup, and I
 
 ## Basic network and machine IP info
 
-- Home gateway: `192.168.1.1`
+- Home routers and subnets:
+    - External modem/router subnet: `10.0.0.0` (XFinity model CGM4981COM modem/router - admin webpage http://10.0.0.1/)
+    - Internal router subnet (all home machines): `192.168.1.0` (TP-Link Archer - admin webpage http://192.168.1.1/webpages/login.html)
+    - All admin passwords in 1password
 - Main development machine `192.168.1.111`
 - `poweredge` server: `192.168.1.200`
 - Router DHCP configured to assign static IPs based on MAC addresses
+
+## Dynamic DNS Raspberry PI setup
+
+- Raspberry PI Zero 2 W
+- DNS provider namecheap.com
+    - https://www.namecheap.com/support/knowledgebase/article.aspx/595/11/how-do-i-enable-dynamic-dns-for-a-domain/
+    - https://www.namecheap.com/support/knowledgebase/article.aspx/5/11/are-there-any-alternate-dynamic-dns-clients/
+- TODO: finish setup, test, and document    
+
+## Main development machine setup
+
+- Add `192.168.1.200 poweredge` to `/etc/hosts`
 
 # Install Ubuntu Desktop LTS
 
@@ -75,7 +90,32 @@ Basic steps like language, keyboard layout, etc are omitted. All defaults are as
 
 # Basic application setup
 
-Use Firefox from Ubuntu GUI as browser
+## General notes
+
+- Use Firefox from Ubuntu GUI as browser
+
+## No-password sudo
+
+- `sudo visudo`
+- Change `%sudo ...` line to `%sudo ALL=(ALL) NOPASSWD: ALL`
+
+## Package installation
+
+- `sudo apt update`
+- `sudo apt install -y net-tools` - for `ifconfig` and others
+
+## sshd server setup
+
+- `sudo apt update`
+- `sudo apt install -y openssh-server`
+- `sudo systemctl status ssh`
+
+### Add public ssh key
+
+- From main development machine, copy public key: `cat ~/.ssh/id_rsa.pub | pbcopy`
+- `ssh poweredge`
+- `sudo vi ~/.ssh/authorized_keys`
+- paste public key and save
 
 ## Nomachine NX
 
@@ -89,6 +129,8 @@ Allows access to server GUI from main development machine.
 - On main development machine, install nomachine client, and access via hostname (TODO: document config)
 
 # Kubernetes cluster setup
+
+Following https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/
 
 ## Disable swap
 
