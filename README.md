@@ -33,7 +33,7 @@ Some of this is very specific to my particular server, home network setup, and I
     - Internal router subnet (all home machines): `192.168.1.0` (TP-Link Archer - admin webpage http://192.168.1.1/webpages/login.html)
     - All admin passwords in 1password
 - Main development machine `192.168.1.111`
-- `poweredge` server: `192.168.1.200`
+- `poweredge` server: `192.168.1.200`, connected to `eno1`, MAC `14:18:77:57:75:36`
 - Router DHCP configured to assign static IPs based on MAC addresses
 
 ## Dynamic DNS Raspberry PI setup
@@ -47,6 +47,7 @@ Some of this is very specific to my particular server, home network setup, and I
 ## Main development machine setup
 
 - Add `192.168.1.200 poweredge` to `/etc/hosts`
+- `brew install k9s` (text-based kubernetes management interface)
 
 # Install Ubuntu Desktop LTS
 
@@ -82,7 +83,7 @@ Basic steps like language, keyboard layout, etc are omitted. All defaults are as
     - Pick `sda` for bootloader installation (creates ~1GB FAT32 partition)
     - Create 1000GB ext4 partition with mount point of `/` (leaving ~900 GB free for future partitions)
 - Create account
-    - Username: `cwoolley` (same as my main dev laptop, so I don't have to specify username for SSH)
+    - Username: `cwoolley` (same as my main dev laptop, so I don't have to specify username for SSH, just host. If your username is different you can configure it in your ssh config)
     - Computer name: `poweredge`
 - Wait for install to finish, then restart, and wait for reboot and welcome screen
 - Take all defaults and finish
@@ -132,7 +133,7 @@ Allows access to server GUI from main development machine.
 
 Following https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/
 
-## Disable swap
+## Disable swap on kubernetes host server
 
 This is required for kubernetes hosts (https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#swap-configuration)
 
@@ -141,4 +142,59 @@ This is required for kubernetes hosts (https://kubernetes.io/docs/setup/producti
 - `sudo reboot`
 - `free -h` and verify swap line shows all zeros
 
+## Install kubeadm
 
+- https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+- ssh to server `ssh poweredge`
+- `nc 127.0.0.1 6443 -v` to check port (should be connection refused now, because we haven't set anything up yet. Don't know why Kubernetes docs have it in this order)
+
+### Set up containerd
+
+Set up `containerd` - https://kubernetes.io/docs/setup/production-environment/container-runtimes/
+
+Enable IPv4 packet forwarding:
+
+```
+# sysctl params required by setup, params persist across reboots
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.ipv4.ip_forward = 1
+EOF
+
+# Apply sysctl params without reboot
+sudo sysctl --system
+```
+
+Test with `sysctl net.ipv4.ip_forward`
+
+Install `containerd`:
+
+- See https://github.com/containerd/containerd/blob/main/docs/getting-started.md for reference.
+- Note that this points you to https://docs.docker.com/engine/install/debian/ for the `apt-get` installation, but we don't actually follow these, because we don't want all of docker. Just `containerd`, and that doesn't even need the docker apt repo added.
+- `sudo apt update`
+- `sudo apt -y install containerd`
+
+Configure `systemd` cgroup driver:
+
+- See https://kubernetes.io/docs/setup/production-environment/container-runtimes/#cgroup-drivers and https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd-systemd
+- `sudo mkdir -p /etc/containerd`
+- Make default config file `sudo containerd config default | sudo tee /etc/containerd/config.toml`
+- `sudo vi /etc/containerd/config.toml`
+- Search for (`/` in vim): `plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.runc.options` section
+- Add `SystemdCgroup = true` to that section
+- Restart: `sudo systemctl restart containerd`
+- Verify:
+    - `sudo systemctl status containerd`
+    - `sudo journalctl -u containerd --no-pager -n 50`
+
+Install `nerdctl`:
+
+- See https://github.com/containerd/nerdctl
+- `cd ~/Downloads`
+- `wget https://github.com/containerd/nerdctl/releases/download/v2.0.2/nerdctl-full-2.0.2-linux-amd64.tar.gz`
+- `sudo tar Cxzvvf /usr/local nerdctl-full-2.0.2-linux-amd64.tar.gz`
+- Verify:
+    - `nerdctl --help`
+    - `sudo nerdctl --debug run ruby:alpine ruby --version` (check for successful output of ruby version)
+- Clean up any running containers: `sudo nerdctl rm $(sudo nerdctl ps -aq)`    
+
+### continue...
