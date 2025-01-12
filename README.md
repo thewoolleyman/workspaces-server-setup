@@ -1,22 +1,22 @@
 # workspaces-server-setup
 
-## Table of contents
+# Table of contents
 
-[[TOC]]
+[TOC]
 
-## What is this project?
+# What is this project?
 
 [Chad's](https://gitlab.com/cwoolley-gitlab) notes and supporting files for setting up [GitLab Remote Development Workspaces](https://docs.gitlab.com/ee/user/workspace/) from scratch.
 
 For now, it only contains notes on setting up my home bare-metal server.
 
-## Overview
+# Overview
 
 The approach I am taking is simple and manual. Automation is not a priority for now. For now, the goal is to ensure I document every step in detail for future reference (and potential automation).
 
 Some of this is very specific to my particular server, home network setup, and ISP, as well as the versions of OS/software used.
 
-## Server hardware info
+# Server hardware info
 
 - https://www.theserverstore.com/Dell-PowerEdge-R630-36-CORE-Virtualization-Server-192GB-3x-800GB-SSD-H730p_p_988.html
 - https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://i.dell.com/sites/doccontent/shared-content/data-sheets/en/documents/dell-poweredge-r630-spec-sheet.pdf&ved=2ahUKEwiOmZmr_bCEAxW3FjQIHexrAh8QFnoECCYQAQ&usg=AOvVaw0GT_z0LYLwK9Rt-9iKSgBz
@@ -24,9 +24,9 @@ Some of this is very specific to my particular server, home network setup, and I
 - https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://www.dell.com/support/manuals/en-us/poweredge-r630-dsms/r630_om_pub/dell-poweredge-r630-system-overview%3Fguid%3Dguid-a743b271-3784-4599-8c90-0fbca035aeb0%26lang%3Den-us&ved=2ahUKEwiO2JzZ_rCEAxXVHjQIHdIyBgwQFnoECA4QAQ&usg=AOvVaw14gsicB1V6nroCDHgMTogF
 - https://www.dell.com/support/manuals/en-us/poweredge-r630-dsms/r630_om_pub/dell-poweredge-r630-system-overview?guid=guid-a743b271-3784-4599-8c90-0fbca035aeb0&lang=en-us
 
-## Install Ubuntu Desktop LTS
+# Install Ubuntu Desktop LTS
 
-### Why Ubuntu desktop instead of server?
+## Why Ubuntu desktop instead of server?
 
 Because:
 
@@ -37,7 +37,7 @@ Because:
 
 If this were a production server, that would be a different story.
 
-### Download Ubuntu, burn to installation media, and start install
+## Download Ubuntu, burn to installation media, and start install
 
 - https://ubuntu.com/download/desktop
 - Follow instructions to burn to DVD or USB drive (using balenaEtcher - MacOS Sequoia and Windows 11 don't seem to even recognize the Ubuntu ISO image). I used a WD 120GB USB portable drive.
@@ -45,7 +45,7 @@ If this were a production server, that would be a different story.
 - F11 to get boot menu in BIOS
 - Boot to USB
 
-### Ubuntu initial install
+## Ubuntu initial install
 
 Basic steps like language, keyboard layout, etc are omitted. All defaults are assumed, only changes from defaults are documented.
 
