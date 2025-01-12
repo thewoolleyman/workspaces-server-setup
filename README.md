@@ -79,11 +79,24 @@ Use Firefox from Ubuntu GUI as browser
 
 ## Nomachine NX
 
+Allows access to server GUI from main development machine.
+
 - Download
     - https://www.nomachine.com
     - download free edition
     - Linux DEB amd64
 - Double click downloaded .deb, open with App Center, install
 - On main development machine, install nomachine client, and access via hostname (TODO: document config)
-- 
+
+# Kubernetes cluster setup
+
+## Disable swap
+
+This is required for kubernetes hosts (https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#swap-configuration)
+
+- `sudo vi /etc/fstab`
+- comment (prepend `#`) or delete `/swap.img` line
+- `sudo reboot`
+- `free -h` and verify swap line shows all zeros
+
 
