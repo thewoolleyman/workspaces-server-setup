@@ -85,6 +85,7 @@ Basic steps like language, keyboard layout, etc are omitted. All defaults are as
 - Create account
     - Username: `cwoolley` (same as my main dev laptop, so I don't have to specify username for SSH, just host. If your username is different you can configure it in your ssh config)
     - Computer name: `poweredge`
+    - So, wherever it says `ssh to server`, I'm typing `ssh poweredge`
 - Wait for install to finish, then restart, and wait for reboot and welcome screen
 - Take all defaults and finish
 - From "Show Apps", run software updater and do all updates
@@ -114,7 +115,7 @@ Basic steps like language, keyboard layout, etc are omitted. All defaults are as
 ### Add public ssh key
 
 - From main development machine, copy public key: `cat ~/.ssh/id_rsa.pub | pbcopy`
-- `ssh poweredge`
+- ssh to server
 - `sudo vi ~/.ssh/authorized_keys`
 - paste public key and save
 
@@ -131,7 +132,7 @@ Allows access to server GUI from main development machine.
 
 # Kubernetes cluster setup
 
-Following https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/
+See https://kubernetes.io/docs/setup/production-environment/
 
 ## Disable swap on kubernetes host server
 
@@ -144,16 +145,15 @@ This is required for kubernetes hosts (https://kubernetes.io/docs/setup/producti
 
 ## Install kubeadm
 
-- https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
-- ssh to server `ssh poweredge`
+- Following https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/
 - `nc 127.0.0.1 6443 -v` to check port (should be connection refused now, because we haven't set anything up yet. Don't know why Kubernetes docs have it in this order)
 
-### Set up containerd
+## Set up containerd
 
 Set up `containerd` - https://kubernetes.io/docs/setup/production-environment/container-runtimes/
 
-Enable IPv4 packet forwarding:
-
+- ssh to server
+- Enable IPv4 packet forwarding:
 ```
 # sysctl params required by setup, params persist across reboots
 cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
@@ -163,17 +163,16 @@ EOF
 # Apply sysctl params without reboot
 sudo sysctl --system
 ```
+- Test with `sysctl net.ipv4.ip_forward`
 
-Test with `sysctl net.ipv4.ip_forward`
-
-Install `containerd`:
+### Install `containerd`:
 
 - See https://github.com/containerd/containerd/blob/main/docs/getting-started.md for reference.
 - Note that this points you to https://docs.docker.com/engine/install/debian/ for the `apt-get` installation, but we don't actually follow these, because we don't want all of docker. Just `containerd`, and that doesn't even need the docker apt repo added.
 - `sudo apt update`
 - `sudo apt -y install containerd`
 
-Configure `systemd` cgroup driver:
+### Configure `systemd` cgroup driver:
 
 - See https://kubernetes.io/docs/setup/production-environment/container-runtimes/#cgroup-drivers and https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd-systemd
 - `sudo mkdir -p /etc/containerd`
@@ -186,7 +185,7 @@ Configure `systemd` cgroup driver:
     - `sudo systemctl status containerd`
     - `sudo journalctl -u containerd --no-pager -n 50`
 
-Install `nerdctl`:
+## Install `nerdctl`:
 
 - See https://github.com/containerd/nerdctl
 - `cd ~/Downloads`
@@ -197,4 +196,6 @@ Install `nerdctl`:
     - `sudo nerdctl --debug run ruby:alpine ruby --version` (check for successful output of ruby version)
 - Clean up any running containers: `sudo nerdctl rm $(sudo nerdctl ps -aq)`    
 
-### continue...
+## Install kubeadm
+
+- See https://kubernetes.io/docs/tasks/tools/
