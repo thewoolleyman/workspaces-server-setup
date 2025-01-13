@@ -132,7 +132,9 @@ Allows access to server GUI from main development machine.
 
 # Kubernetes cluster setup
 
-See https://kubernetes.io/docs/setup/production-environment/
+- See https://kubernetes.io/docs/setup/production-environment/
+- These docs are for Kubernetes v1.32
+- Unless otherwise noted, all commands are run directly on server
 
 ## Disable swap on kubernetes host server
 
@@ -152,7 +154,8 @@ This is required for kubernetes hosts (https://kubernetes.io/docs/setup/producti
 
 Set up `containerd` - https://kubernetes.io/docs/setup/production-environment/container-runtimes/
 
-- ssh to server
+### Enable IPv4 packet forwarding
+
 - Enable IPv4 packet forwarding:
 ```
 # sysctl params required by setup, params persist across reboots
@@ -171,6 +174,7 @@ sudo sysctl --system
 - Note that this points you to https://docs.docker.com/engine/install/debian/ for the `apt-get` installation, but we don't actually follow these, because we don't want all of docker. Just `containerd`, and that doesn't even need the docker apt repo added.
 - `sudo apt update`
 - `sudo apt -y install containerd`
+- Verify: `containerd --version`:  `containerd github.com/containerd/containerd/v2 v2.0.0 207ad711eabd375a01713109a8a197d197ff6542`
 
 ### Configure `systemd` cgroup driver:
 
@@ -192,10 +196,41 @@ sudo sysctl --system
 - `wget https://github.com/containerd/nerdctl/releases/download/v2.0.2/nerdctl-full-2.0.2-linux-amd64.tar.gz`
 - `sudo tar Cxzvvf /usr/local nerdctl-full-2.0.2-linux-amd64.tar.gz`
 - Verify:
-    - `nerdctl --help`
+    - `nerdctl --version`: `nerdctl version 2.0.2`
     - `sudo nerdctl --debug run ruby:alpine ruby --version` (check for successful output of ruby version)
 - Clean up any running containers: `sudo nerdctl rm $(sudo nerdctl ps -aq)`    
 
-## Install kubeadm
+## Install kubeadm, kubelet, and kubectl
 
-- See https://kubernetes.io/docs/tasks/tools/
+- See https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/ and https://kubernetes.io/docs/tasks/tools/
+- `sudo apt update`
+- `sudo apt install -y apt-transport-https ca-certificates curl gpg` (command from docs, only `apt-transport-https` was actually newly installed)
+- `curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg`
+- `echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list`
+- `sudo apt update`
+- `sudo apt install -y kubelet kubeadm kubectl`
+- `sudo apt-mark hold kubelet kubeadm kubectl`
+- Verify `kubectl version`:
+```
+Client Version: v1.32.0
+Kustomize Version: v5.5.0
+```
+- Verify `kubeadm version -o yaml`
+```
+clientVersion:
+  buildDate: "2024-12-11T18:04:20Z"
+  compiler: gc
+  gitCommit: 70d3cc986aa8221cd1dfb1121852688902d3bf53
+  gitTreeState: clean
+  gitVersion: v1.32.0
+  goVersion: go1.23.3
+  major: "1"
+  minor: "32"
+  platform: linux/amd64
+```
+- Verify `kubelet --version`
+```
+Kubernetes v1.32.0
+```
+
+## continue...
