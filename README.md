@@ -16,6 +16,12 @@ The approach I am taking is simple and manual. Automation is not a priority for 
 
 Some of this is very specific to my particular server, home network setup, and ISP, as well as the versions of OS/software used.
 
+## Skill assumptions
+
+- "Basic" linux/unix/networking knowledge - "Basic" being whatever knowledge I already had
+- Can use `vi`/`vim`
+- YAML knowledge
+
 # Server hardware info
 
 - https://www.theserverstore.com/Dell-PowerEdge-R630-36-CORE-Virtualization-Server-192GB-3x-800GB-SSD-H730p_p_988.html
@@ -44,10 +50,9 @@ Some of this is very specific to my particular server, home network setup, and I
     - https://www.namecheap.com/support/knowledgebase/article.aspx/5/11/are-there-any-alternate-dynamic-dns-clients/
 - TODO: finish setup, test, and document    
 
-## Main development machine setup
+## Add hosts entry to main development machine
 
 - Add `192.168.1.200 poweredge` to `/etc/hosts`
-- `brew install k9s` (text-based kubernetes management interface)
 
 # Install Ubuntu Desktop LTS
 
@@ -168,6 +173,21 @@ sudo sysctl --system
 ```
 - Test with `sysctl net.ipv4.ip_forward`
 
+# Disable IPv6
+
+THis was necessary because the initial `kubeadm init` did not properly bind to the IPv4 `0.0.0.0` interface.
+
+- Create a sysctl config:
+```
+sudo tee /etc/sysctl.d/60-disable-ipv6.conf << 'EOF'
+net.ipv6.conf.all.disable_ipv6 = 1
+net.ipv6.conf.default.disable_ipv6 = 1
+net.ipv6.conf.lo.disable_ipv6 = 1
+EOF
+```
+- `sudo sysctl -p /etc/sysctl.d/60-disable-ipv6.conf`
+- Verify `cat /proc/sys/net/ipv6/conf/all/disable_ipv6`: Should be `1`
+
 ### Install `containerd`:
 
 - See https://github.com/containerd/containerd/blob/main/docs/getting-started.md for reference.
@@ -270,6 +290,11 @@ Then you can join any number of worker nodes by running the following on each as
 kubeadm join 192.168.1.200:6443 --token TOKEN \
 	--discovery-token-ca-cert-hash sha256:f7475baf329ec7d4eaff11ecfa750adfeb9e3498cbfe83bc7d9c8f93802dfa74
 ```
+- Verify `sudo ss -tulpn | grep 6443`. It should have IPv4 entry:
+```
+tcp   LISTEN 0      4096               *:6443             *:*    users:(("kube-apiserver",pid=12995,fd=3))
+```
+- **NOTE! `sudo netstat -tulpn | grep 6443` (using `netstat` instead of `ss`) will return a line with `tcp6`, even if IPv6 is disabled!**
 
 ### Setup to start using cluster
 
@@ -301,6 +326,24 @@ CoreDNS is running at https://192.168.1.200:6443/api/v1/namespaces/kube-system/s
 
 To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
 ```
+
+### Note on redoing `kubeadmin init`
+
+See https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/#tear-down 
+
+- Install ipvsadm: `sudo apt install ipvsadm`
+
+Reset:
+
+- `sudo kubeadm reset`
+- `sudo iptables -F && sudo iptables -t nat -F && sudo iptables -t mangle -F && sudo iptables -X`
+- `sudo ipvsadm -C`
+
+Reinstall using `kubectl init` process above.
+
+Then after init is successful, copy over new config to `~/.kube/config` and change permissions:
+
+- `sudo cp /etc/kubernetes/admin.conf $HOME/.kube/config`
 
 ## Set up Pod network add-on
 
@@ -340,3 +383,78 @@ Taints:             <none>
 - Verify with `kubectl get pods`
 - Wait for `STATUS` to be `Running`
 - Cleanup: `kubectl delete pod nginx`
+
+# Set up MacOS development machine to administer cluster
+
+## Install kubernetes tools
+
+Run all these commands on the main development machine, i.e. the client normally used to administer the cluster.
+
+- `brew install kubernetes-cli` - kubernetes cli tools
+    - Verify with `kubectl version`
+```
+Client Version: v1.32.0
+Kustomize Version: v5.5.0
+```
+- `brew install k9s`:  text-based kubernetes management interface
+    - Verify with `k9s` (`ctrl-C` to quit)
+- `brew install kubectx`: gives `kubens` command line to change kubernetes namespaces
+    - Verify with `kubens --help`
+
+## Enable client connection to cluster
+
+- On server, run `sudo cat /etc/kubernetes/admin.conf` and copy output
+- Run remaining commands on dev client machine
+- `mkdir -p ~/.kube`
+- `vi ~/.kube/config`
+- Paste the `admin.config` you copied from the server, if the file is new and empty.
+- If the file is not empty (you already have other clusters), paste the following parts (carefully check for correct indentation after pasting, and consider moving `name:` to beginning of array):
+    - Paste the `clusters:` entry with `name: kubernetes` entry into the `clusters:` array.
+    - Paste the `contexts:` entry with `name: kubernetes-admin@kubernetes` entry into the `contexts:` array.
+    - Paste the `users:` entry with `name: kubernetes-admin` entry into the `users:` array.
+- Verify: `kubectl config get-contexts 'kubernetes-admin@kubernetes'`
+```
+...
+CURRENT   NAME                          CLUSTER      AUTHINFO           NAMESPACE
+          kubernetes-admin@kubernetes   kubernetes   kubernetes-admin
+```
+- See current context: `kubectl config current-context`
+- If it is different, switch with `kubectx` and pick context `kubernetes-admin@kubernetes`
+
+
+# DEBUGGING UPDATES
+
+## IPV6 error
+
+- in `sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml` add this to kube-apiserver command:
+```
+- --bind-address=192.168.1.200
+```
+
+
+## crictl, maybe unrelated?
+
+Get rid of warnings...
+
+```
+$ sudo crictl inspect $(sudo crictl ps | grep kube-apiserver | awk '{print $1}') | grep -A 10 Args
+WARN[0000] Config "/etc/crictl.yaml" does not exist, trying next: "/usr/bin/crictl.yaml"
+WARN[0000] runtime connect using default endpoints: [unix:///run/containerd/containerd.sock unix:///run/crio/crio.sock unix:///var/run/cri-dockerd.sock]. As the default settings are now deprecated, you should set the endpoint instead.
+WARN[0000] Image connect using default endpoints: [unix:///run/containerd/containerd.sock unix:///run/crio/crio.sock unix:///var/run/cri-dockerd.sock]. As the default settings are now deprecated, you should set the endpoint instead.
+WARN[0000] Config "/etc/crictl.yaml" does not exist, trying next: "/usr/bin/crictl.yaml"
+WARN[0000] runtime connect using default endpoints: [unix:///run/containerd/containerd.sock unix:///run/crio/crio.sock unix:///var/run/cri-dockerd.sock]. As the default settings are now deprecated, you should set the endpoint instead.
+```
+
+Claude suggeestion:
+```
+$ sudo tee /etc/crictl.yaml << 'EOF'
+runtime-endpoint: unix:///run/containerd/containerd.sock
+image-endpoint: unix:///run/containerd/containerd.sock
+timeout: 2
+debug: false
+EOF
+runtime-endpoint: unix:///run/containerd/containerd.sock
+image-endpoint: unix:///run/containerd/containerd.sock
+timeout: 2
+debug: false
+```
