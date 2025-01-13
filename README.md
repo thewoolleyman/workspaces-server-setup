@@ -130,7 +130,7 @@ Allows access to server GUI from main development machine.
 - Double click downloaded .deb, open with App Center, install
 - On main development machine, install nomachine client, and access via hostname (TODO: document config)
 
-# Kubernetes cluster setup
+# Kubernetes initial tools installation and configuration
 
 - See https://kubernetes.io/docs/setup/production-environment/
 - These docs are for Kubernetes v1.32
@@ -232,5 +232,94 @@ clientVersion:
 ```
 Kubernetes v1.32.0
 ```
+- Enable kubelet service: `sudo systemctl enable --now kubelet`. From docs: "_The kubelet is now restarting every few seconds, as it waits in a crashloop for kubeadm to tell it what to do._"
 
-## continue...
+# Kubernetes cluster setup
+
+See https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/
+
+- Verify usable IP via `ip route show`: `192.168.1.0/24 dev eno1 proto kernel scope link src 192.168.1.200 metric 100`
+
+## Init kubernetes cluster
+
+- See https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/#more-information and https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-init/
+
+### Run `kubeadm init`
+
+- `sudo kubeadm init`
+- It should work, and end with output like this:
+```
+Your Kubernetes control-plane has initialized successfully!
+
+To start using your cluster, you need to run the following as a regular user:
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+Alternatively, if you are the root user, you can run:
+
+  export KUBECONFIG=/etc/kubernetes/admin.conf
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+Then you can join any number of worker nodes by running the following on each as root:
+
+kubeadm join 192.168.1.200:6443 --token TOKEN \
+	--discovery-token-ca-cert-hash sha256:f7475baf329ec7d4eaff11ecfa750adfeb9e3498cbfe83bc7d9c8f93802dfa74
+```
+
+### Setup to start using cluster
+
+(using commands from `kubeadm init` output above)
+
+- `mkdir -p $HOME/.kube`
+- `sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config`
+- `sudo chown $(id -u):$(id -g) $HOME/.kube/config`
+- Verify `kubectl get nodes`
+```
+NAME        STATUS   ROLES           AGE     VERSION
+poweredge   Ready    control-plane   9m23s   v1.32.0
+```
+- Verify `kubectl get pods -n kube-system`
+```
+NAME                                READY   STATUS    RESTARTS   AGE
+coredns-668d6bf9bc-khnsf            1/1     Running   0          9m58s
+coredns-668d6bf9bc-lwhw2            1/1     Running   0          9m58s
+etcd-poweredge                      1/1     Running   0          10m
+kube-apiserver-poweredge            1/1     Running   0          10m
+kube-controller-manager-poweredge   1/1     Running   0          10m
+kube-proxy-xv7np                    1/1     Running   0          9m58s
+kube-scheduler-poweredge            1/1     Running   0          10m
+```
+- Verify `kubectl cluster-info`:
+```
+Kubernetes control plane is running at https://192.168.1.200:6443
+CoreDNS is running at https://192.168.1.200:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+```
+
+## Set up Pod network add-on
+
+- See https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/#pod-network and https://kubernetes.io/docs/concepts/cluster-administration/addons/#networking-and-network-policy
+- Use Calico: https://www.tigera.io/project-calico/, github https://github.com/projectcalico/calico
+- `3.29.1` is latest current release
+- `kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.1/manifests/calico.yaml`
+- Verify `kubectl get pods -n kube-system -l k8s-app=calico-node`
+```
+NAME                READY   STATUS    RESTARTS   AGE
+calico-node-hxpm5   1/1     Running   0          2m16s
+```
+- Verify `kubectl get pods -n kube-system -l k8s-app=calico-kube-controllers`
+```
+NAME                                       READY   STATUS    RESTARTS   AGE
+calico-kube-controllers-5745477d4d-bbx2d   1/1     Running   0          2m48s
+```
+- Verify `kubectl get pods -n kube-system | grep calico`
+```
+calico-kube-controllers-5745477d4d-bbx2d   1/1     Running   0          3m14s
+calico-node-hxpm5                          1/1     Running   0          3m14s
+```
