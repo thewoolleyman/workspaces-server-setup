@@ -323,3 +323,20 @@ calico-kube-controllers-5745477d4d-bbx2d   1/1     Running   0          2m48s
 calico-kube-controllers-5745477d4d-bbx2d   1/1     Running   0          3m14s
 calico-node-hxpm5                          1/1     Running   0          3m14s
 ```
+
+## Allow cluster to schedule pods on control plane node
+
+- See https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/#control-plane-node-isolation
+- `kubectl taint nodes --all node-role.kubernetes.io/control-plane-`
+- Look for output `node/poweredge untainted`
+- Verify `kubectl describe node | grep Taints`
+```
+Taints:             <none>
+```
+
+## Run an image to verify setup
+
+- `kubectl run nginx --image=nginx`
+- Verify with `kubectl get pods`
+- Wait for `STATUS` to be `Running`
+- Cleanup: `kubectl delete pod nginx`
