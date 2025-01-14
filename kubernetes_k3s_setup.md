@@ -36,6 +36,41 @@ Created symlink /etc/systemd/system/multi-user.target.wants/k3s.service → /etc
 [INFO]  systemd: Starting k3s
 ```
 
+## Enable server non-root user to access cluster
+
+- See https://docs.k3s.io/cluster-access
+- Run the following as non-root user (`cwoolley`)
+- `sudo chmod a+r /etc/rancher/k3s/k3s.yaml` (not concerned about opening up read access, it's a local server)
+- `vi ~/.bashrc` and add the following lines:
+```
+# Kubernetes / k3s
+
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+```
+- `source ~/.bashrc`
+- Verify: `kubectl get nodes`
+```
+NAME        STATUS   ROLES                  AGE   VERSION
+poweredge   Ready    control-plane,master   13h   v1.31.4+k3s1
+```
+
+## (optional) Change server port from default 6443 to 7443
+
+My local Rancher Desktop setup on MacOS uses port-forwarding 6443, so I need to change the server port to 7443.
+
+You can do this by reinstalling with the correct options. This also works for any other configuration changes.
+
+- See https://docs.k3s.io/installation/configuration#configuration-file
+- `sudo vi /etc/rancher/k3s/config.yaml`, add the following line:
+```
+https-listen-port: 7443
+```
+- re-run install: `curl -sfL https://get.k3s.io | sh -`
+- restart the service: `sudo systemctl restart k3s`
+- Verify (in new terminal): `watch sudo systemctl status k3s`
+- Update any `kubectl` configs that may exist (e.g. on MacOS client) to point to new port
+
+
 # Set up MacOS development machine to administer cluster
 
 ## Enable client connection to cluster
