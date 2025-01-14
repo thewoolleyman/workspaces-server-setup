@@ -123,6 +123,7 @@ Since I ran into issues with [kubernetes full setup](./kubernetes_full_setup.md)
 
 - `sudo apt update`
 - `sudo apt install -y net-tools` - for `ifconfig` and others
+- `sudo apt install -y curl` - for downloading stuff
 
 ## sshd server setup
 
@@ -147,6 +148,26 @@ Allows access to server GUI from main development machine.
     - Linux DEB amd64
 - Double click downloaded .deb, open with App Center, install
 - On main development machine, install nomachine client, and access via hostname (TODO: document config)
+
+# Install basic kubernetes tools on MacOS client machine
+
+## Install kubernetes tools
+
+Run all these commands on the main development machine, i.e. the client normally used to administer the cluster.
+
+- `brew install kubernetes-cli` - kubernetes cli tools
+  - Verify with `kubectl version`
+```
+Client Version: v1.32.0
+Kustomize Version: v5.5.0
+```
+- `brew install k9s`:  text-based kubernetes management interface
+  - Verify with `k9s` (`ctrl-C` to quit)
+- `brew install kubectx`: gives `kubens` command line to change kubernetes namespaces
+  - Verify with `kubens --help`
+
+The remaining client setup will be done after the kubernetes cluster setup is completed, in the corresponding section
+"Set up MacOS development machine to administer cluster"
 
 # Kubernetes setup
 

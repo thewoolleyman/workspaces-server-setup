@@ -257,21 +257,6 @@ Taints:             <none>
 
 # Set up MacOS development machine to administer cluster
 
-## Install kubernetes tools
-
-Run all these commands on the main development machine, i.e. the client normally used to administer the cluster.
-
-- `brew install kubernetes-cli` - kubernetes cli tools
-    - Verify with `kubectl version`
-```
-Client Version: v1.32.0
-Kustomize Version: v5.5.0
-```
-- `brew install k9s`:  text-based kubernetes management interface
-    - Verify with `k9s` (`ctrl-C` to quit)
-- `brew install kubectx`: gives `kubens` command line to change kubernetes namespaces
-    - Verify with `kubens --help`
-
 ## Enable client connection to cluster
 
 - On server, run `sudo cat /etc/kubernetes/admin.conf` and copy output
