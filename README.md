@@ -90,16 +90,29 @@ Basic steps like language, keyboard layout, etc are omitted. All defaults are as
 - Create account
     - Username: `cwoolley` (same as my main dev laptop, so I don't have to specify username for SSH, just host. If your username is different you can configure it in your ssh config)
     - Computer name: `poweredge`
-    - So, wherever it says `ssh to server`, I'm typing `ssh poweredge`
+    - So, wherever it says `ssh to server` in instructions, I'm typing `ssh poweredge`
 - Wait for install to finish, then restart, and wait for reboot and welcome screen
 - Take all defaults and finish
-- From "Show Apps", run software updater and do all updates
+- From "Show Apps", run `Software Updater` (NOT `Software & Updates`) and do all updates
 
-# Basic application setup
+## Dual boot setup (optional)
 
-## General notes
+Since I ran into issues with [kubernetes full setup](./kubernetes_full_setup.md), I set up a dual boot with a separate OS install to test k3s seetup. This section gives instructions on how I set up the dual boot
 
-- Use Firefox from Ubuntu GUI as browser
+- Boot server
+- Hold down F2 until you get into System Setup (BIOS)
+- System BIOS -> Boot Settings -> UEFI Boot Settings -> Enter on UEFI Boot Sequence -> Ensure "Disk connected to back USB" is first (before Integrated RAID Controller). This will allow you to boot from USB to install a second OS.
+- Back -> Finish -> Save Changes -> Finish -> Exit and Reboot
+- From Ubuntu setup, follow same instructions as above, but "How do you want to install Ubuntu", do not pick "Install alongside Ubuntu", pick "Manual installation"
+-  in Manual partitioning:
+    - resize the existing `sda2` partition smaller, from 1TB to 200G
+    - Create a second `sda3` partition for the second OS, with 500G, `ext4` and mount point `/`. ONLY check `format` for this partition.
+- Continue with same install instructions as above  
+- After install reboots, the default should be the new OS.
+- To boot to old OS, hold down F11 to get boot menu, and pick the sda2 drive to boot into the initial (full-kubernetes) OS
+- TODO: add instructions on how to change default OS. EFI? grub?
+
+# Basic OS and application setup
 
 ## No-password sudo
 
@@ -115,7 +128,7 @@ Basic steps like language, keyboard layout, etc are omitted. All defaults are as
 
 - `sudo apt update`
 - `sudo apt install -y openssh-server`
-- `sudo systemctl status ssh`
+- Verify `sudo systemctl status ssh`
 
 ### Add public ssh key
 
@@ -139,5 +152,5 @@ Allows access to server GUI from main development machine.
 
 There's two separate versions:
 
-- [kubernetes full setup](./kubernetes_full_setup.md) (more complex, incomplete)
-- [kubernetes k3s setup](./kubernetes_k3s_setup.md) (simpler, still incomplete)
+- [kubernetes k3s setup](./kubernetes_k3s_setup.md) (simpler, the approach I am currently using)
+- [kubernetes full setup](./kubernetes_full_setup.md) (more complex, incomplete, abandoned due to issues)
