@@ -70,6 +70,12 @@ https-listen-port: 7443
 - Verify (in new terminal): `watch sudo systemctl status k3s`
 - Update any `kubectl` configs that may exist (e.g. on MacOS client) to point to new port
 
+## Run an image to verify setup
+
+- `kubectl run nginx --image=nginx`
+- Verify with `kubectl get pods`
+- Wait for `STATUS` to be `Running`
+- Cleanup: `kubectl delete pod nginx`
 
 # Set up MacOS development machine to administer cluster
 
