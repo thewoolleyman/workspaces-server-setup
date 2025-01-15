@@ -301,7 +301,7 @@ WARN[0000] Config "/etc/crictl.yaml" does not exist, trying next: "/usr/bin/cric
 WARN[0000] runtime connect using default endpoints: [unix:///run/containerd/containerd.sock unix:///run/crio/crio.sock unix:///var/run/cri-dockerd.sock]. As the default settings are now deprecated, you should set the endpoint instead.
 ```
 
-Claude suggeestion:
+Claude suggestion:
 ```
 $ sudo tee /etc/crictl.yaml << 'EOF'
 runtime-endpoint: unix:///run/containerd/containerd.sock
@@ -313,4 +313,12 @@ runtime-endpoint: unix:///run/containerd/containerd.sock
 image-endpoint: unix:///run/containerd/containerd.sock
 timeout: 2
 debug: false
+```
+
+## It works as root!
+
+- `kubectl get nodes` works as root
+- Using certs directly from curl also works from non-root:
+```
+curl --cert /Users/cwoolley/.kube/k3s-test-certs/client.crt --key /Users/cwoolley/.kube/k3s-test-certs/client.key -k -v -XGET  -H "User-Agent: kubectl/v1.32.0 (darwin/arm64) kubernetes/70d3cc9" -H "Accept: application/json;as=Table;v=v1;g=meta.k8s.io,application/json;as=Table;v=v1beta1;g=meta.k8s.io,application/json" 'https://192.168.1.200:6443/api/v1/nodes?limit=500'
 ```
