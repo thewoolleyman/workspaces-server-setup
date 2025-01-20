@@ -59,4 +59,5 @@ There's two separate versions:
 
 ## Eclipe Che setup
 
+- [Ubuntu dual boot setup](./ubuntu_dual_boot_setup.md)
 - [Eclipse Che setup](./eclipse_che_setup.md)
