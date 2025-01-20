@@ -51,3 +51,7 @@ There's two separate versions:
 
 - [Kubernetes k3s setup](./kubernetes_k3s_setup.md) (simpler, the approach I am currently using)
 - [Kubernetes full setup](./kubernetes_full_setup.md) (more complex)
+
+# (optional) Eclipse Che setup
+
+- [Eclipse Che setup](./eclipse_che_setup.md)
