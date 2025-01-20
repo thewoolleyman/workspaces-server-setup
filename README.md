@@ -31,7 +31,7 @@ and all steps on each sub-page should be done in order. This is because some ste
 
 # Server hardware and network info
 
-- [server hardware and network info](./server_hardware_and_network_info.md)
+- [Server hardware and network info](./server_hardware_and_network_info.md)
 
 # Ubuntu OS installation
 
@@ -49,5 +49,5 @@ and all steps on each sub-page should be done in order. This is because some ste
 
 There's two separate versions:
 
-- [kubernetes k3s setup](./kubernetes_k3s_setup.md) (simpler, the approach I am currently using)
-- [kubernetes full setup](./kubernetes_full_setup.md) (more complex, incomplete, abandoned due to issues)
+- [Kubernetes k3s setup](./kubernetes_k3s_setup.md) (simpler, the approach I am currently using)
+- [Kubernetes full setup](./kubernetes_full_setup.md) (more complex)

@@ -286,8 +286,7 @@ CURRENT   NAME                          CLUSTER      AUTHINFO           NAMESPAC
 - See current context: `kubectl config current-context`
 - If it is different, switch with `kubectx` and pick context `kubernetes-admin@kubernetes`
 
-
-# Other notes/changes from debugging kubectl connection
+# (supplementary/optional) Other notes/changes from debugging kubectl connection
 
 These are some notes from debugging the `kubectl` connection from my Mac to the server (which turned out to be using a
 version of kubectl that was incompatible with the server). They weren't related to the root cause, but keeping them here
