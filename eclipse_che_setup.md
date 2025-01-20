@@ -4,14 +4,14 @@
 
 [TOC]
 
-## Overview
+# Overview
 
 This section contains instructions on setting up and using [Eclipse Che](https://eclipse.dev/che/).
 
 Che is the primary open-source example of using the [devfile standard](https://devfile.io/) in a Kubernetes environment,
 and thus is a good comparison/contrast for the GitLab workspaces offering which also uses the devfile standard.
 
-## Install chectl CLI on MacOs
+# Install chectl CLI on MacOs
 
 - See https://eclipse.dev/che/docs/stable/administration-guide/installing-the-chectl-management-tool/#installing-the-chectl-management-tool-on-linux-or-macos
 - `bash <(curl -sL  https://che-incubator.github.io/chectl/install.sh)`
@@ -19,6 +19,8 @@ and thus is a good comparison/contrast for the GitLab workspaces offering which 
 ```
 chectl/7.97.0 darwin-arm64 node-v18.18.0
 ```
+
+# Install Che on local MacOS
 
 ## Install Minikube
 
@@ -89,4 +91,105 @@ exec /entrypoint-init-container.sh: exec format error
 So, it was an AMD64 vs ARM64 issue. Rather than try to fix this, I decided to just reinstall Che on a native linux
 machine instead.
 
-## Install chectl CLI on Ubuntu
+# Install Che on native linux machine
+
+## Install Minikube
+
+- See https://eclipse.dev/che/docs/stable/administration-guide/installing-che-on-minikube/
+- Follow https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fdebian+package
+```
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube_latest_amd64.deb
+sudo dpkg -i minikube_latest_amd64.deb
+```
+
+## Install docker driver for minikube
+
+NOTE: I end up undoing this because Che needs the VirtualBox driver, and VirtualBox requires KVM to be disabled,
+and Docker relies on KVM.
+
+- See https://minikube.sigs.k8s.io/docs/drivers/docker/
+- Install docker via preferred method
+
+## Start minikube with docker driver
+
+- `minikube start --driver=docker`
+
+## Set up alias for minikube kubectl
+
+NOTE: I ended up undoing this, because the `chectl` Che install didn't like an alias for `kubectl`, it wanted a native
+executable.
+
+- `vi ~/.bash_aliases`
+- Add `alias kubectl="minikube kubectl --"`
+
+## Finish minikube setup
+
+- Add to kubectl context: `minikube update-context`
+- Verify: `minikube kubectl get nodes`
+```
+NAME       STATUS   ROLES           AGE   VERSION
+minikube   Ready    control-plane   58s   v1.32.0
+```
+- Set up metrics server: `minikube addons enable metrics-server`
+- view `minikube dashboard` from browser (using native UI or NoMachine)
+
+## Install virtualbox
+
+Unfortunately, Che doesn't work with Docker driver. So, we install the virtualbox driver
+
+- https://minikube.sigs.k8s.io/docs/drivers/virtualbox/
+- Install virtualbox via preferred method
+- Verify virtualbox starts and runs
+
+## Disable KVM (it conflicts with VirtualBox)
+
+- Disable KVM modules
+```
+echo "blacklist kvm_intel" | sudo tee -a /etc/modprobe.d/blacklist-kvm.conf
+echo "blacklist kvm" | sudo tee -a /etc/modprobe.d/blacklist-kvm.conf
+```
+- Reboot
+- Verify: `lsmod | grep kvm` (should not see any modules)
+
+## Install a native kubectl on linux
+
+- The approach to alias `kubectl` to `minikube kubectl` is not working for the Che install, so we need to install a native kubectl
+- See https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
+- `vi ~/.bash_aliases` and comment out the `alias kubectl="minikube kubectl --"` line  
+- `curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"`
+- `sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl`
+
+## Reinstall minikube with configuration required for Che
+
+- See: https://eclipse.dev/che/docs/stable/administration-guide/installing-che-on-minikube/
+- `minikube delete`
+- `minikube start --addons=ingress,dashboard --vm=true --memory=10240 --cpus=4 --disk-size=50GB --kubernetes-version=v1.23.9`
+  - This should automatically select the virtualbox driver
+- Verify minikube still running: `kubectl get nodes`
+
+# Install chectl CLI on Linux
+
+- See https://eclipse.dev/che/docs/stable/administration-guide/installing-the-chectl-management-tool/#installing-the-chectl-management-tool-on-linux-or-macos
+- `bash <(curl -sL  https://che-incubator.github.io/chectl/install.sh)`
+- Verify: `chectl version`
+```
+chectl/7.97.0 linux-x64 node-v18.18.0
+```
+
+## Install Che on minikube
+
+- `chectl server:deploy --platform minikube`
+- Verify: `chectl server:status`
+```
+Eclipse Che Version    : 7.97.0
+Eclipse Che Url        : https://192.168.59.100.nip.io/dashboard/
+```
+
+## View Che Dashboard
+
+- From the server GUI: `chectl dashboard:open`
+- Opens browser window, click "Advanced" to ignore cert/security/etc errors and get to login page
+- Logins:
+  - admin: `che@eclipse.org`/`admin`
+  - user1: `user1@che`/`password` (same for `user2` through `user5`)
+- Verify: Start a workspace on the Che dashboard with "Empty" workspace and default editor (VS Code)
