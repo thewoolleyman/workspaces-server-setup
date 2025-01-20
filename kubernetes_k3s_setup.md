@@ -15,6 +15,18 @@
 - These docs are for k3s v1.32.0+k3s1 (Kubernetes v1.32.0)
 - Unless otherwise noted, all commands are run directly on server
 
+## Disable traefik in k3s config file prior to install
+
+NOTE: I assume this works, I forgot to do it on my initial install, I've only done it via a re-install as documented below.
+
+- See https://docs.k3s.io/installation/configuration#configuration-file
+- `sudo mkdir -p /etc/rancher/k3s`
+- `sudo vi /etc/rancher/k3s/config.yaml`, add the following lines:
+```
+disable:
+  - traefik
+```
+
 ## Download and install k3s
 
 - See https://docs.k3s.io/quick-start
@@ -60,12 +72,13 @@ poweredge   Ready    control-plane,master   13h   v1.31.4+k3s1
 
 ## (optional) Reinstalling/reconfiguring k3s
 
+You can reinstall k3s to change configuration options.
 
-You can reinstall k3s to change configuration options. This is useful if you need to change the server port, for example.
+You can do this by reinstalling with the correct options. This works for any configuration changes (AFAIK?).
+
+### Changing port
 
 Here's an example where I changed the server port from default 6443 to 7443 (note: not fully tested, I reverted back to 6443).
-
-You can do this by reinstalling with the correct options. This also works for any other configuration changes.
 
 - See https://docs.k3s.io/installation/configuration#configuration-file
 - `sudo vi /etc/rancher/k3s/config.yaml`, add the following line:
@@ -76,6 +89,33 @@ https-listen-port: 7443
 - restart the service: `sudo systemctl restart k3s`
 - Verify (in new terminal): `watch sudo systemctl status k3s`
 - Update any `kubectl` configs that may exist (e.g. on MacOS client) to point to new port
+
+### Changing default to not install traefik ingress
+
+Here's an example where I changed the default ingress to not use traefik because I forgot to do it on initial install.
+
+- See:
+  - https://docs.k3s.io/installation/configuration#configuration-file
+  - https://docs.k3s.io/installation/packaged-components
+  - https://qdnqn.com/k3s-remove-traefik/
+- Run `sudo file /var/lib/rancher/k3s/server/manifests/traefik.yaml` to verify it exists.
+- `kubectl get pods --namespace kube-system | grep traefik`
+```
+helm-install-traefik-crd-jjsf2            0/1     Completed   0               3m15s
+helm-install-traefik-x6fbr                0/1     Completed   1               3m15s
+svclb-traefik-9f2713f2-lhb5w              2/2     Running     0               3m12s
+traefik-57b79cf995-pgxhd                  1/1     Running     0               3m12s
+```  
+- `sudo vi /etc/rancher/k3s/config.yaml`, add the following lines:
+```
+disable:
+  - traefik
+```
+- re-run install: `curl -sfL https://get.k3s.io | sh -`
+- restart the service: `sudo systemctl restart k3s`
+- Verify: `sudo file /var/lib/rancher/k3s/server/manifests/traefik.yaml` to verify it no longer exists.
+  (NOTE: it might take a few seconds after the service restart to actually delete the file!)
+- Verify: `kubectl get pods --namespace kube-system | grep traefik` is empty
 
 ## Run an image to verify setup
 
