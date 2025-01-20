@@ -161,6 +161,9 @@ Run all these commands on the main development machine, i.e. the client normally
 Client Version: v1.32.0
 Kustomize Version: v5.5.0
 ```
+  - **_IMPORTANT NOTE!!! - If the CLI tool versions such as kubectl are incompatible with the server, you can get obscure errors such as "No route to host".
+    This can happen even if the minor versions are close or perhaps even the same. If you have problems accessing the cluster via CLI tools, ensure you have
+    downloaded and installed the latest (or matching) versions of the CLI tools, AND are actually using that version and not a different one on your path._**
 - `brew install k9s`:  text-based kubernetes management interface
   - Verify with `k9s` (`ctrl-C` to quit)
 - `brew install kubectx`: gives `kubens` command line to change kubernetes namespaces

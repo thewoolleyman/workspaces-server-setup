@@ -54,9 +54,12 @@ NAME        STATUS   ROLES                  AGE   VERSION
 poweredge   Ready    control-plane,master   13h   v1.31.4+k3s1
 ```
 
-## (optional) Change server port from default 6443 to 7443
+## (optional) Reinstalling/reconfiguring k3s
 
-My local Rancher Desktop setup on MacOS uses port-forwarding 6443, so I need to change the server port to 7443.
+
+You can reinstall k3s to change configuration options. This is useful if you need to change the server port, for example.
+
+Here's an example where I changed the server port from default 6443 to 7443 (note: not fully tested, I reverted back to 6443).
 
 You can do this by reinstalling with the correct options. This also works for any other configuration changes.
 
@@ -96,5 +99,8 @@ https-listen-port: 7443
 CURRENT   NAME   CLUSTER   AUTHINFO    NAMESPACE
           k3s    k3s       k3s-admin
 ```
+  - **_IMPORTANT NOTE!!! - If the CLI tool versions such as kubectl are incompatible with the server, you can get obscure errors such as "No route to host".
+    This can happen even if the minor versions are close or perhaps even the same. If you have problems accessing the cluster via CLI tools, ensure you have
+    downloaded and installed the latest (or matching) versions of the CLI tools, AND are actually using that version and not a different one on your path._**
 - See current context: `kubectl config current-context`
 - If it is different, switch with `kubectx` and pick context `k3s`

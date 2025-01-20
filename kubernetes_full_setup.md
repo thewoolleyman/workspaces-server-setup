@@ -100,6 +100,9 @@ EOF
 - `echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list`
 - `sudo apt update`
 - `sudo apt install -y kubelet kubeadm kubectl`
+  - **_IMPORTANT NOTE!!! - If the CLI tool versions such as kubectl are incompatible with the server, you can get obscure errors such as "No route to host".
+    This can happen even if the minor versions are close or perhaps even the same. If you have problems accessing the cluster via CLI tools, ensure you have
+    downloaded and installed the latest (or matching) versions of the CLI tools, AND are actually using that version and not a different one on your path._**
 - `sudo apt-mark hold kubelet kubeadm kubectl`
 - Verify `kubectl version`:
 ```
@@ -274,11 +277,18 @@ Taints:             <none>
 CURRENT   NAME                          CLUSTER      AUTHINFO           NAMESPACE
           kubernetes-admin@kubernetes   kubernetes   kubernetes-admin
 ```
+  - **_IMPORTANT NOTE!!! - If the CLI tool versions such as kubectl are incompatible with the server, you can get obscure errors such as "No route to host".
+    This can happen even if the minor versions are close or perhaps even the same. If you have problems accessing the cluster via CLI tools, ensure you have
+    downloaded and installed the latest (or matching) versions of the CLI tools, AND are actually using that version and not a different one on your path._**
 - See current context: `kubectl config current-context`
 - If it is different, switch with `kubectx` and pick context `kubernetes-admin@kubernetes`
 
 
-# DEBUGGING UPDATES
+# Other notes/changes from debugging kubectl connection
+
+These are some notes from debugging the `kubectl` connection from my Mac to the server (which turned out to be using a
+version of kubectl that was incompatible with the server). They weren't related to the root cause, but keeping them here
+for future reference.
 
 ## IPV6 error
 
