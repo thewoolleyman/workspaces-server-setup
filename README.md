@@ -9,6 +9,9 @@
 [Chad's](https://gitlab.com/cwoolley-gitlab) notes and supporting files for setting up [GitLab Remote Development Workspaces](https://docs.gitlab.com/ee/user/workspace/) from scratch
 on a bare-metal server in my local home network.
 
+It also serves as a dumping ground for other Workspaces-related dogfooding and setup info,
+such as [Eclipse Che Setup](./eclipse_che_setup.md).
+
 # Overview
 
 The approach I am taking is straightforward and manual. Automation is not a priority for now. For now, the goal is to 
@@ -52,6 +55,8 @@ There's two separate versions:
 - [Kubernetes k3s setup](./kubernetes_k3s_setup.md) (simpler, the approach I am currently using)
 - [Kubernetes full setup](./kubernetes_full_setup.md) (more complex)
 
-# (optional) Eclipse Che setup
+# Other various setup documentation
+
+## Eclipe Che setup
 
 - [Eclipse Che setup](./eclipse_che_setup.md)
