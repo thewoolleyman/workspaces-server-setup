@@ -93,6 +93,10 @@ machine instead.
 
 # Install Che on native linux machine
 
+## Install cubectx (kubens)
+
+- `sudo apt install kubectx`
+
 ## Install Minikube
 
 - See https://eclipse.dev/che/docs/stable/administration-guide/installing-che-on-minikube/
@@ -158,6 +162,7 @@ echo "blacklist kvm" | sudo tee -a /etc/modprobe.d/blacklist-kvm.conf
 - `vi ~/.bash_aliases` and comment out the `alias kubectl="minikube kubectl --"` line  
 - `curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"`
 - `sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl`
+- Add bash alias `k` for `kubectl`
 
 ## Reinstall minikube with configuration required for Che
 
@@ -193,3 +198,82 @@ Eclipse Che Url        : https://192.168.59.100.nip.io/dashboard/
   - admin: `che@eclipse.org`/`admin`
   - user1: `user1@che`/`password` (same for `user2` through `user5`)
 - Verify: Start a workspace on the Che dashboard with "Empty" workspace and default editor (VS Code)
+
+# Notes on Che
+
+## Inspecting Che's init container
+
+- pull it
+```
+docker pull quay.io/che-incubator/che-code:7.97.0
+```
+- Check out the entrypoint script
+```
+docker create --name che-code quay.io/che-incubator/che-code:7.97.0
+docker cp che-code:/entrypoint-init-container.sh .
+docker rm che-code
+cat entrypoint-init-container.sh
+```
+
+Here's the output:
+
+```
+#!/bin/sh
+#
+# Copyright (c) 2021 Red Hat, Inc.
+# This program and the accompanying materials are made
+# available under the terms of the Eclipse Public License 2.0
+# which is available at https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#   Red Hat, Inc. - initial API and implementation
+#
+# Copy checode stuff to the shared volume
+cp -r /checode-* /checode/
+# Copy machine-exec as well
+mkdir -p /checode/bin
+cp /bin/machine-exec /checode/bin/
+# Copy entrypoint
+cp /entrypoint-volume.sh /checode/
+# Copy remote configuration
+mkdir -p /checode/remote
+cp -r /remote /checode
+echo "listing all files copied"
+ls -la /checode
+```
+
+Sample output:
+
+```
+listing all files copied
+total 28
+drwxrwxrwx 6 root root 4096 Jan 20 10:59 .
+drwxr-xr-x 1 root root 4096 Jan 20 10:59 ..
+drwxr-xr-x 2 1234 root 4096 Jan 20 10:59 bin
+drwxr-xr-x 4 1234 root 4096 Jan 20 10:59 checode-linux-libc
+drwxr-xr-x 8 1234 root 4096 Jan 20 10:59 checode-linux-musl
+-rwxr-xr-x 1 1234 root 3547 Jan 20 10:59 entrypoint-volume.sh
+drwxr-xr-x 3 1234 root 4096 Jan 20 10:59 remote
+```
+
+## Starting a sample repo with a devfile pointing to a container with a daemon entrypoint
+
+- Use https://gitlab.com/gitlab-org/workspaces/examples/example-sshd-http-app/
+- Start it in Che, by pointing to the repo (have to kill any existing workspaces, default is only 1)
+- `kubens user1-che`
+- `k get po -o yaml`
+
+```
+      lifecycle:
+        postStart:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - |
+              {
+              nohup /checode/entrypoint-volume.sh > /checode/entrypoint-logs.txt 2>&1 &
+              } 1>/tmp/poststart-stdout.txt 2>/tmp/poststart-stderr.txt
+```
