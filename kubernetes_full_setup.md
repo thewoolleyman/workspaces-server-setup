@@ -1,10 +1,13 @@
 # Kubernetes Full setup
 
-## NOTE
+# Table of contents
+
+[TOC]
+
+# Overview
 
 - This doc contains the version of instructions for a "Full" kubernetes installation, based on https://kubernetes.io/docs/setup/production-environment/
 - It is an alternative approach to the [kubernetes k3s setup](./kubernetes_k3s_setup.md), which is documented separately.
-- It is incomplete and stalled, due to getting blocked on getting `kubectl` from my Mac to be able to properly access the server. It kept failing with `no route to server`, even though kuberetes was running fine otherwise, and the kubernetes API host/port/endpoint was otherwise completely open and accessible from the Mac.
 
 # Kubernetes initial tools installation and configuration
 
