@@ -55,6 +55,18 @@ There's two separate versions:
 - [Kubernetes k3s setup](./kubernetes_k3s_setup.md) (simpler, the approach I am currently using)
 - [Kubernetes full setup](./kubernetes_full_setup.md) (more complex)
 
+# Helm setup
+
+- See: https://helm.sh/docs/intro/install/#from-apt-debianubuntu
+```
+curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
+sudo apt-get install apt-transport-https --yes
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+sudo apt-get update
+sudo apt-get install helm
+```
+
+
 # GitLab setup
 
 - [GitLab setup](./gitlab_setup.md)

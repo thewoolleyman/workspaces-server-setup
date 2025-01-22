@@ -23,3 +23,17 @@ This section contains instructions on setting up a Workspaces agent on the clust
 - In project, go to: Operate -> Kuberenetes clusters
 - Connect a cluster
 - Under "Option 2: Create and register an agent...", type `workspaces-agent`
+- After the agent is created, select `Create token`
+- Create a token with name `workspaces agent token`
+- Copy the `Agent access token` value and copy it somewhere safe  
+- Copy the helm command and run it on the server (note: if you have a real domain, replace it as the `kasAddress`):
+```
+helm repo add gitlab https://charts.gitlab.io
+helm repo update
+helm upgrade --install workspaces-agent gitlab/gitlab-agent \
+    --namespace gitlab-agent-workspaces-agent \
+    --create-namespace \
+    --set image.tag=v17.8.0 \
+    --set config.token=YOUR_TOKEN_VALUE \
+    --set config.kasAddress=wss://127.0.0.1/-/kubernetes-agent/
+```

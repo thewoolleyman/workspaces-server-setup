@@ -56,14 +56,9 @@ Created symlink /etc/systemd/system/multi-user.target.wants/k3s.service → /etc
 
 - See https://docs.k3s.io/cluster-access
 - Run the following as non-root user (`cwoolley`)
-- `sudo chmod a+r /etc/rancher/k3s/k3s.yaml` (not concerned about opening up read access, it's a local server)
-- `vi ~/.bashrc` and add the following lines:
-```
-# Kubernetes / k3s
-
-export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-```
-- `source ~/.bashrc`
+- `mkdir -p ~/.kube`  
+- `sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config`
+- `sudo chown $USER:$USER ~/.kube/config`  
 - Verify: `kubectl get nodes`
 ```
 NAME        STATUS   ROLES                  AGE   VERSION
