@@ -55,6 +55,10 @@ There's two separate versions:
 - [Kubernetes k3s setup](./kubernetes_k3s_setup.md) (simpler, the approach I am currently using)
 - [Kubernetes full setup](./kubernetes_full_setup.md) (more complex)
 
+# Workspaces agent setup
+
+- [Workspaces agent setup](./workspaces_agent_setup.md)
+
 # Other various setup documentation
 
 ## Eclipe Che setup
