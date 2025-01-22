@@ -15,9 +15,11 @@ This section contains instructions on setting up a Workspaces agent on the clust
 - For ease of documentation, we will assume everything is created under a top-level group with a dedicated structure.
   You can change this if you want.
 
-# Setup steps
+# Create agent
 
 - Create a new top-level group `workspaces-dogfooding`. 
 - All projects should be created in this group.
 - Create a project `workspaces-agents`.
-- 
+- In project, go to: Operate -> Kuberenetes clusters
+- Connect a cluster
+- Under "Option 2: Create and register an agent...", type `workspaces-agent`

@@ -41,6 +41,22 @@ This is to provide a stable, high-uptime (read: not GDK) installation of GitLab 
 - Pin the version to limit auto-updates: `sudo apt-mark hold gitlab-ee`
 - Show what packages are held back: `sudo apt-mark showhold`
 
+## Configure KAS with fix for error
+
+NOTE: this may be a bug that gets fixed...
+
+- The following error came from ``:
+```
+2025-01-22_10:02:05.13902 {"time":"2025-01-22T02:02:05.138953742-08:00","level":"ERROR","msg":"Program aborted","error":"private API server: construct own private API multi URL: failed to parse OWN_PRIVATE_API_URL grpc://localhost:8155: ParseAddr(\"localhost\"): unable to parse IP"}
+```
+- Here's the fix - edit `/etc/gitlab/gitlab.rb`, change `OWN_PRIVATE_API_URL` to have `127.0.0.1` instead of `localhost`:
+```
+gitlab_kas['env'] = {
+  'OWN_PRIVATE_API_URL' => 'grpc://127.0.0.1:8155'
+}
+```
+- `sudo gitlab-ctl reconfigure`
+
 # Initial configuration
 
 ## Initial root login
@@ -63,9 +79,15 @@ This is to provide a stable, high-uptime (read: not GDK) installation of GitLab 
 - Enter license key
 - Verify in: Admin -> Overview -> Dashboard -> License Overview (should be banner at top with license details)
 
+## Add SSH key
+
+- See https://docs.gitlab.com/17.8/ee/user/ssh.html
+
 ## Misc notes
 
+- Reconfigure: `sudo gitlab-ctl reconfigure`
 - Restart: `sudo gitlab-ctl restart`
 - Status: `sudo gitlab-ctl status`
 - Console: `sudo gitlab-rails console`
 - Postgres console: `sudo gitlab-psql -d gitlabhq-production`
+- View production logs: `sudo tail -f /var/log/gitlab/gitlab-rails/production.log`
