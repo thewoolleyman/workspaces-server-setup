@@ -62,3 +62,10 @@ This is to provide a stable, high-uptime (read: not GDK) installation of GitLab 
 - Admin (bottom of left sidebar) -> Settings -> General -> Add License
 - Enter license key
 - Verify in: Admin -> Overview -> Dashboard -> License Overview (should be banner at top with license details)
+
+## Misc notes
+
+- Restart: `sudo gitlab-ctl restart`
+- Status: `sudo gitlab-ctl status`
+- Console: `sudo gitlab-rails console`
+- Postgres console: `sudo gitlab-psql -d gitlabhq-production`
