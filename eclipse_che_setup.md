@@ -199,7 +199,29 @@ Eclipse Che Url        : https://192.168.59.100.nip.io/dashboard/
   - user1: `user1@che`/`password` (same for `user2` through `user5`)
 - Verify: Start a workspace on the Che dashboard with "Empty" workspace and default editor (VS Code)
 
+## Set up port forwarding to access from another client on local network
+
+NOTE: Not positive if this will always work...
+
+- `geekom` is the linux host, `192.168.59.100` is the `nip.io` address of Che server, `dex` prefix is used by Che login
+- Note that port `443` must be available locally for port forwarding. You can use a different local port, but
+  it will always get removed from redirect responses, so you have to manually add it and resubmit the requests.
+- From other client machine set up port forwarding.
+```
+ssh -L 443:192.168.59.100:443 geekom
+```
+- Add to `/etc/hosts` on client:
+```
+127.0.0.1	localhost gitlab.local 192.168.59.100.nip.io dex.192.168.59.100.nip.io
+```
+- From local client visit the standard Che address: https://192.168.59.100.nip.io/
+
 # Notes on Che
+
+# Che commands quick reference
+
+- Check server status: `chectl server:status`
+- Set up port forward from local client: `sudo ssh -L 443:192.168.59.100:443 cwoolley@geekom`
 
 ## Inspecting Che's init container
 
