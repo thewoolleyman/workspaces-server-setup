@@ -314,7 +314,7 @@ drwxr-xr-x 3 1234 root 4096 Jan 20 10:59 remote
 ### Get lifecycle hook info on the workspace
 
 - `k explain pod.spec.containers.lifecycle` - example of explaining part of the schema
-- `k get pod $PODNAME -o jsonpath='{.spec.containers[0].lifecycle}' | jq` - Print out lifecycle hooks of first container:
+- `k get pod $PODNAME -o jsonpath='{.spec.containers[0].lifecycle}' | jq` - Print out lifecycle hooks of first container.
 - Default postStart entry for a Che workspace, using a devfile with no `postStart` hooks:
 ```
 {
@@ -329,8 +329,17 @@ drwxr-xr-x 3 1234 root 4096 Jan 20 10:59 remote
   }
 }
 ```
+- Do the same with YAML...
+- `sudo apt install -y yq`
+- `k get pod $PODNAME -o yaml | yq .spec.containers[0].lifecycle`
+- Print the command with newlines:  
+- `k get pod $PODNAME -o jsonpath='{.spec.containers[0].lifecycle.postStart.exec.command[2]}'`:
+```{
+nohup /checode/entrypoint-volume.sh > /checode/entrypoint-logs.txt 2>&1 &
+} 1>/tmp/poststart-stdout.txt 2>/tmp/poststart-stderr.txt
+```
 
-### Get info on a workspaces that is failing to start - example 1
+### Debug a workspaces that is failing to start
 
 Scenario: 
 
@@ -408,3 +417,43 @@ debugged above.
 
 - `kubectl port-forward $PODNAME 8000:8000`
 - `curl http://localhost:8000` - should return the example HTTP server homepage
+
+### Add an example postStart command to a devfile
+
+- Add a new workspace in Che
+- Import from git URL: `https://gitlab.com/gitlab-org/workspaces/examples/example-sshd-http-app.git`
+- In advanced options, give path to custom devfile: `.devfile-with-poststart.yaml`, with these contents:
+```
+
+schemaVersion: 2.2.0
+components:
+  - name: tooling-container
+    attributes:
+      gl/inject-editor: true
+    container:
+      # NOTE: THIS IMAGE EXISTS ONLY FOR DEMO PURPOSES AND WILL NOT BE MAINTAINED
+      image: registry.gitlab.com/gitlab-org/workspaces/examples/example-sshd-http-app:latest
+      endpoints:
+        - name: http-8000
+          targetPort: 8000
+commands:
+  - id: say-hello-command
+    exec:
+      commandLine: |-
+        echo "Hello!"
+      component: tooling-container
+events:
+  postStart:
+    - say-hello-command
+```  
+- **IMPORTANT NOTE!!!** - Due to an apparent bug in Che, it deletes the `/examples/example-sshd-http-app.git`
+  part of the path from the git URL when it appends the custom devfile URL param. You need to manually fix the git URL
+  to re-add the missing parts.
+- Once container starts, check the kubernetes postStart event for the tooling container:
+- `k get pod $PODNAME -o jsonpath='{.spec.containers[0].lifecycle.postStart.exec.command[2]}'`:
+```{
+nohup /checode/entrypoint-volume.sh > /checode/entrypoint-logs.txt 2>&1 &
+echo "Hello!"
+} 1>/tmp/poststart-stdout.txt 2>/tmp/poststart-stderr.txt
+```
+- Notice that compared to the default example above, it has inserted the devfile postStart `exec` 
