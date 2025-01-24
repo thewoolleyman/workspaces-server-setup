@@ -108,11 +108,11 @@ sudo dpkg -i minikube_latest_amd64.deb
 
 ## Install docker driver for minikube
 
-NOTE: I end up undoing this because Che needs the VirtualBox driver, and VirtualBox requires KVM to be disabled,
-and Docker relies on KVM.
+NOTE: I end up undoing this (Docker desktop uninstall) because Che needs the VirtualBox driver, and VirtualBox requires 
+KVM to be disabled, and Docker relies on KVM. I ended up installing docker engine (https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
 
 - See https://minikube.sigs.k8s.io/docs/drivers/docker/
-- Install docker via preferred method
+- Install docker via preferred method (I used Docker Desktop)
 
 ## Start minikube with docker driver
 
@@ -154,6 +154,31 @@ echo "blacklist kvm" | sudo tee -a /etc/modprobe.d/blacklist-kvm.conf
 ```
 - Reboot
 - Verify: `lsmod | grep kvm` (should not see any modules)
+  
+## Uninstall Docker Desktop and install Docker Engine
+
+- Uninstall Docker Desktop (https://docs.docker.com/desktop/uninstall/):
+- `sudo apt remove docker-desktop`
+- `rm -r $HOME/.docker/desktop`
+- `sudo rm /usr/local/bin/com.docker.cli`
+- `sudo apt purge docker-desktop`
+  
+## Install docker engine
+
+- See https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository
+- `sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin`
+- Verify: `sudo docker run hello-world` 
+
+## Docker engine postinstall
+
+- See https://docs.docker.com/engine/install/linux-postinstall/
+- `sudo usermod -aG docker $USER`
+- log out and back in
+- run `groups`, check `docker` is listed
+- Test service: `sudo systemctl stop docker` (get error about socket, not sure why, just ignored it)
+- `sudo systemctl start docker`
+- Verify: `docker run hello-world`
+- Reset context (otherwise `minikube` delete/start complains): `docker context use default`
 
 ## Install a native kubectl on linux
 
@@ -170,6 +195,7 @@ echo "blacklist kvm" | sudo tee -a /etc/modprobe.d/blacklist-kvm.conf
 - `minikube delete`
 - `minikube start --addons=ingress,dashboard --vm=true --memory=10240 --cpus=4 --disk-size=50GB --kubernetes-version=v1.23.9`
   - This should automatically select the virtualbox driver
+- Set up metrics server: `minikube addons enable metrics-server`
 - Verify minikube still running: `kubectl get nodes`
 
 # Install chectl CLI on Linux
@@ -216,9 +242,17 @@ ssh -L 443:192.168.59.100:443 geekom
 ```
 - From local client visit the standard Che address: https://192.168.59.100.nip.io/
 
+# Notes on Minikube
+
+## Minikube commands quick reference
+
+- `minikube stop`
+- `minikube start --addons=ingress,dashboard --vm=true --memory=10240 --cpus=4 --disk-size=50GB --kubernetes-version=v1.23.9`
+- `minikube start --v=10`
+
 # Notes on Che
 
-# Che commands quick reference
+## Che commands quick reference
 
 - Check server status: `chectl server:status`
 - Set up port forward from local client: `sudo ssh -L 443:192.168.59.100:443 cwoolley@geekom`
