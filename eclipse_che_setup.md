@@ -213,7 +213,7 @@ chectl/7.97.0 linux-x64 node-v18.18.0
 - Verify: `chectl server:status`
 ```
 Eclipse Che Version    : 7.97.0
-Eclipse Che Url        : https://192.168.59.100.nip.io/dashboard/
+Eclipse Che Url        : https://192.168.59.101.nip.io/dashboard/
 ```
 
 ## View Che Dashboard
@@ -229,18 +229,18 @@ Eclipse Che Url        : https://192.168.59.100.nip.io/dashboard/
 
 NOTE: Not positive if this will always work...
 
-- `geekom` is the linux host, `192.168.59.100` is the `nip.io` address of Che server, `dex` prefix is used by Che login
+- `geekom` is the linux host, `192.168.59.101` is the `nip.io` address of Che server, `dex` prefix is used by Che login
 - Note that port `443` must be available locally for port forwarding. You can use a different local port, but
   it will always get removed from redirect responses, so you have to manually add it and resubmit the requests.
 - From other client machine set up port forwarding.
 ```
-ssh -L 443:192.168.59.100:443 geekom
+ssh -L 443:192.168.59.101:443 geekom
 ```
 - Add to `/etc/hosts` on client:
 ```
-127.0.0.1	localhost gitlab.local 192.168.59.100.nip.io dex.192.168.59.100.nip.io
+127.0.0.1	localhost gitlab.local 192.168.59.101.nip.io dex.192.168.59.101.nip.io
 ```
-- From local client visit the standard Che address: https://192.168.59.100.nip.io/
+- From local client visit the standard Che address: https://192.168.59.101.nip.io/
 
 # Notes on Minikube
 
@@ -255,7 +255,7 @@ ssh -L 443:192.168.59.100:443 geekom
 ## Che commands quick reference
 
 - Check server status: `chectl server:status`
-- Set up port forward from local client: `sudo ssh -L 443:192.168.59.100:443 cwoolley@geekom`
+- Set up port forward from local client: `sudo ssh -L 443:192.168.59.101:443 cwoolley@geekom`
 
 ## Inspecting Che's init container
 
@@ -565,3 +565,61 @@ sh -c 'while true; do echo "sleeping from postStart at $(date +%Y-%m-%d_%H:%M:%S
 } 1>/tmp/poststart-stdout.txt 2>/tmp/poststart-stderr.txt
 ```
 - Question: Why were they in opposite order? are the background commands always last?
+
+### Testing ordering of multiple background and non-background jobs
+
+To answer the above question "Why were they in opposite order? are the background commands always last?", I ran the following
+devfile, which contains interleaved background and non-background commands: https://gitlab.com/gitlab-org/workspaces/examples/example-various-devfiles/blob/64cc785fdbc8e71ce033686ba570a03445e9a4e8/devfile-che-empty-default-with-multiple-poststart-events.yaml#L21-21
+
+Here's the contents:
+
+```
+schemaVersion: 2.2.0
+components:
+  - name: universal-developer-image
+    container:
+      image: quay.io/devfile/universal-developer-image:ubi8-latest
+
+commands:
+  - id: sleeping1-background-command
+    exec:
+      commandLine: |-
+        sh -c 'while true; do echo "sleeping 1 from postStart at $(date +%Y-%m-%d_%H:%M:%S)" | tee -a /tmp/sleeping-from-postStart.log; sleep 1; done' &
+      component: universal-developer-image
+  - id: say-hello1-command
+    exec:
+      commandLine: |-
+        echo "Hello 1!"
+      component: universal-developer-image
+  - id: sleeping2-background-command
+    exec:
+      commandLine: |-
+        sh -c 'while true; do echo "sleeping 2 from postStart at $(date +%Y-%m-%d_%H:%M:%S)" | tee -a /tmp/sleeping-from-postStart.log; sleep 1; done' &
+      component: universal-developer-image
+  - id: say-hello2-command
+    exec:
+      commandLine: |-
+        echo "Hello 2!"
+      component: universal-developer-image
+
+events:
+  postStart:
+    - sleeping1-background-command
+    - say-hello1-command
+    - sleeping2-background-command
+    - say-hello2-command
+```
+
+...and you can see from the built kubernetes postStart command that it _DOES_ put both of the background commands
+at the end of the command list, and the two foreground ones at the beginning:
+
+```
+$ k get pod $PODNAME -o jsonpath='{.spec.containers[0].lifecycle.postStart.exec.command[2]}'
+{
+nohup /checode/entrypoint-volume.sh > /checode/entrypoint-logs.txt 2>&1 &
+echo "Hello 1!"
+echo "Hello 2!"
+sh -c 'while true; do echo "sleeping 1 from postStart at $(date +%Y-%m-%d_%H:%M:%S)" | tee -a /tmp/sleeping-from-postStart.log; sleep 1; done' &
+sh -c 'while true; do echo "sleeping 2 from postStart at $(date +%Y-%m-%d_%H:%M:%S)" | tee -a /tmp/sleeping-from-postStart.log; sleep 1; done' &
+} 1>/tmp/poststart-stdout.txt 2>/tmp/poststart-stderr.txt
+```
