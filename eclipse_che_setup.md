@@ -451,12 +451,15 @@ events:
   to re-add the missing parts.
 - Once container starts, check the kubernetes postStart event for the tooling container:
 - `k get pod $PODNAME -o jsonpath='{.spec.containers[0].lifecycle.postStart.exec.command[2]}'`:
-```{
+```
+{
 nohup /checode/entrypoint-volume.sh > /checode/entrypoint-logs.txt 2>&1 &
 echo "Hello!"
 } 1>/tmp/poststart-stdout.txt 2>/tmp/poststart-stderr.txt
 ```
-- Notice that compared to the default example above, it has inserted the devfile postStart `exec` 
+- Notice that compared to the default example above, it has inserted the devfile postStart `exec`
+- Notice the usage of the curly brace shell "command block" or "command group" to redirect all output to the two files
+  in `/tmp`.
 - See the source of `entrypoint-volume.sh` here: https://github.com/che-incubator/che-code/blob/main/build/scripts/entrypoint-volume.sh
 
 ### Testing poststart with official devfile universal-developer-image
