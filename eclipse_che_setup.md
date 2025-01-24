@@ -458,3 +458,73 @@ echo "Hello!"
 ```
 - Notice that compared to the default example above, it has inserted the devfile postStart `exec` 
 - See the source of `entrypoint-volume.sh` here: https://github.com/che-incubator/che-code/blob/main/build/scripts/entrypoint-volume.sh
+
+### Testing poststart with official devfile universal-developer-image
+
+- A default "empty" Che workspace uses this devfile:
+```
+schemaVersion: 2.2.0
+metadata:
+  name: empty-p0bh
+  namespace: user1-che
+components:
+  - name: universal-developer-image
+    container:
+      image: quay.io/devfile/universal-developer-image:ubi8-latest
+```
+- Container comes from here: https://quay.io/repository/devfile/universal-developer-image?tab=tags&tag=ubi8-latest
+- URL for that tag leads to here: https://catalog.redhat.com/software/containers/ubi8/5c647760bed8bd28d0e38f9f?image=6722cc0038ca65309bcb0e7b
+- We can use this directly by copying it to a repo: https://gitlab.com/gitlab-org/workspaces/examples/example-various-devfiles
+- Start a new workspace with this repo URL and devfile (watch the bug that messes up the URL when you paste the devfile path):
+  - Git URL: `https://gitlab.com/gitlab-org/workspaces/examples/example-various-devfiles.git`
+  - Devfile path: `devfile-che-empty-default.yaml`
+- See it start successfully  
+
+### Testing with multiple background and non-background poststart jobs
+
+- We are using [this devfile](https://gitlab.com/gitlab-org/workspaces/examples/example-various-devfiles/-/blob/main/devfile-che-empty-default-with-poststart-events.yaml?ref_type=heads) as an example:
+```
+schemaVersion: 2.2.0
+components:
+  - name: universal-developer-image
+    container:
+      image: quay.io/devfile/universal-developer-image:ubi8-latest
+
+commands:
+  - id: sleeping-background-command
+    exec:
+      commandLine: |-
+        sh -c 'while true; do echo "sleeping from postStart at $(date +%Y-%m-%d_%H:%M:%S)" | tee -a /tmp/sleeping-from-postStart.log; sleep 1; done' &
+      component: universal-developer-image
+  - id: say-hello-command
+    exec:
+      commandLine: |-
+        echo "Hello!"
+      component: universal-developer-image
+
+events:
+  postStart:
+    - sleeping-background-command
+    - say-hello-command
+```
+- Start a new workspace with this repo URL and devfile (watch the bug that messes up the URL when you paste the devfile path):
+  - Git URL: `https://gitlab.com/gitlab-org/workspaces/examples/example-various-devfiles.git`
+  - Devfile path: `devfile-che-empty-default-with-poststart-events.yaml`
+- See it start successfully and open VS Code
+- In VS Code terminal, type: `tail -f /tmp/sleeping-from-postStart.log` and see that the background poststart command is running.
+- In VS Code terminal, type: `head -20 /tmp/poststart-stdout.txt` and see that the `Hello!` output from non-background
+  poststart command is there.
+- Also see /tmp/poststart-stderr.txt` is empty.  
+- In the Che dashboard, click the three dots menu next to the workspace, and select "Workspace Details". Notice there's no
+  output from the postStart commands in the logs.
+- In the server terminal, see both postStart commands, but notice they are in _OPPOSITE ORDER_...
+- `export PODNAME=$(k get po -o name | cut -d/ -f2)`
+- `k get pod $PODNAME -o jsonpath='{.spec.containers[0].lifecycle.postStart.exec.command[2]}'`
+```
+{
+nohup /checode/entrypoint-volume.sh > /checode/entrypoint-logs.txt 2>&1 &
+echo "Hello!"
+sh -c 'while true; do echo "sleeping from postStart at $(date +%Y-%m-%d_%H:%M:%S)" | tee -a /tmp/sleeping-from-postStart.log; sleep 1; done' &
+} 1>/tmp/poststart-stdout.txt 2>/tmp/poststart-stderr.txt
+```
+- Question: Why were they in opposite order? are the background commands always last?
