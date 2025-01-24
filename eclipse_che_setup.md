@@ -162,7 +162,7 @@ echo "blacklist kvm" | sudo tee -a /etc/modprobe.d/blacklist-kvm.conf
 - `vi ~/.bash_aliases` and comment out the `alias kubectl="minikube kubectl --"` line  
 - `curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"`
 - `sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl`
-- Add bash alias `k` for `kubectl`
+- Add bash alias `k` for `kubectl` for convenience
 
 ## Reinstall minikube with configuration required for Che
 
@@ -298,4 +298,34 @@ drwxr-xr-x 3 1234 root 4096 Jan 20 10:59 remote
               {
               nohup /checode/entrypoint-volume.sh > /checode/entrypoint-logs.txt 2>&1 &
               } 1>/tmp/poststart-stdout.txt 2>/tmp/poststart-stderr.txt
+```
+
+## Get information on a running Che workspace
+
+### Get general info on pod
+
+- Ensure a workspace is running and has been recently (re)started
+- `kubens user1-che` - set namespace to workspace user's namespace
+- `k get pod` - get pods
+- `export PODNAME=$(k get po -o name | cut -d/ -f2)` - store podname in env var for easy use in other commands
+  (assumes that there's just one pod)
+- `k get pod $PODNAME -o yaml` - print entire pod as YAML output
+
+### Get lifecycle hook info on the workspace
+
+- `k explain pod.spec.containers.lifecycle` - example of explaining part of the schema
+- `k get pod $PODNAME -o jsonpath='{.spec.containers[0].lifecycle}' | jq` - Print out lifecycle hooks of first container:
+- Default postStart entry for a Che workspace, using a devfile with no `postStart` hooks:
+```
+{
+  "postStart": {
+    "exec": {
+      "command": [
+        "/bin/sh",
+        "-c",
+        "{\nnohup /checode/entrypoint-volume.sh > /checode/entrypoint-logs.txt 2>&1 &\n} 1>/tmp/poststart-stdout.txt 2>/tmp/poststart-stderr.txt\n"
+      ]
+    }
+  }
+}
 ```
