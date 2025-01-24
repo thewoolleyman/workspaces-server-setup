@@ -329,3 +329,73 @@ drwxr-xr-x 3 1234 root 4096 Jan 20 10:59 remote
   }
 }
 ```
+
+### Get info on a workspaces that is failing to start - example 1
+
+Scenario: 
+
+- Using a workspace with a daemon as the entrypoint (https://gitlab.com/gitlab-org/workspaces/examples/example-sshd-http-app)
+- Che UI hung on "Waiting for workspace to start"
+
+Debugging:
+
+- `k get po` - verify that all main and init containers are running
+- `k get events --sort-by='.lastTimestamp'` - get events, verify no errors
+- `k get po -o yaml` - See all info for pod
+- `kubectl get pod -o yaml | grep-A 1  DEVFILE` - see locations of devfiles in mounted volume
+- `kubectl exec $PODNAME -c tooling-container -- cat /devworkspace-metadata/original.devworkspace.yaml` - print the original devfile
+- Note the parts Che added to the original devfile in the repo. Che's mounted version:
+```
+attributes:
+  controller.devfile.io/devworkspace-config:
+    name: devworkspace-config
+    namespace: eclipse-che
+  controller.devfile.io/storage-type: per-user
+  dw.metadata.annotations:
+    che.eclipse.org/devfile-source: |
+      scm:
+        repo: https://gitlab.com/gitlab-org/workspaces/examples/example-sshd-http-app.git
+        fileName: .devfile.yaml
+      factory:
+        params: >-
+          url=https://gitlab.com/gitlab-org/workspaces/examples/example-sshd-http-app.git
+components:
+- attributes:
+    gl/inject-editor: true
+  container:
+    endpoints:
+    - exposure: public
+      name: http-8000
+      protocol: http
+      targetPort: 8000
+    image: registry.gitlab.com/gitlab-org/workspaces/examples/example-sshd-http-app:latest
+    sourceMapping: /projects
+  name: tooling-container
+projects:
+- git:
+    remotes:
+      origin: https://gitlab.com/gitlab-org/workspaces/examples/example-sshd-http-app.git
+  name: example-sshd-http-app
+```
+- original devfile version from repo:
+```
+schemaVersion: 2.2.0
+components:
+  - name: tooling-container
+    attributes:
+      gl/inject-editor: true
+    container:
+      # NOTE: THIS IMAGE EXISTS ONLY FOR DEMO PURPOSES AND WILL NOT BE MAINTAINED
+      image: registry.gitlab.com/gitlab-org/workspaces/examples/example-sshd-http-app:latest
+      endpoints:
+        - name: http-8000
+          targetPort: 8000
+```
+- `kubectl exec $PODNAME -c tooling-container -- cat /checode/entrypoint-logs.txt` - cat entrypoint logs
+- Determined error - container was missing some required libraries:
+```
+...
+[INFO] Using linux-libc ubi8-based assembly...
+[INFO] Node.js dir for running VS Code: /checode/checode-linux-libc/ubi8
+/checode/checode-linux-libc/ubi8/node: error while loading shared libraries: libbrotlidec.so.1: cannot open shared object file: No such file or directory
+```
