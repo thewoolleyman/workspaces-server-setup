@@ -457,3 +457,4 @@ echo "Hello!"
 } 1>/tmp/poststart-stdout.txt 2>/tmp/poststart-stderr.txt
 ```
 - Notice that compared to the default example above, it has inserted the devfile postStart `exec` 
+- See the source of `entrypoint-volume.sh` here: https://github.com/che-incubator/che-code/blob/main/build/scripts/entrypoint-volume.sh
