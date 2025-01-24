@@ -399,3 +399,12 @@ components:
 [INFO] Node.js dir for running VS Code: /checode/checode-linux-libc/ubi8
 /checode/checode-linux-libc/ubi8/node: error while loading shared libraries: libbrotlidec.so.1: cannot open shared object file: No such file or directory
 ```
+
+### Access http server running from container entrypoint
+
+NOTE: This works even though the VS Code is failing to start due to the container image at
+https://gitlab.com/gitlab-org/workspaces/examples/example-sshd-http-app not having proper libraries, as was
+debugged above.
+
+- `kubectl port-forward $PODNAME 8000:8000`
+- `curl http://localhost:8000` - should return the example HTTP server homepage
