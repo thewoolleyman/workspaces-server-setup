@@ -45,7 +45,7 @@ helm upgrade --install workspaces-agent gitlab/gitlab-agent \
     --set image.tag=v17.8.0 \
     --set config.token=YOUR_TOKEN_VALUE \
     --set config.kasAddress=wss://192.168.1.200/-/kubernetes-agent/ \
-    --set "extraArgs={--kas-tls-server-name=gitlab.mindlikewater.net,--kas-insecure-skip-tls-verify}"
+    --set "extraArgs={--kas-tls-server-name=gitlab.example.com,--kas-insecure-skip-tls-verify}"
 ```
 
 - Verify - see logs for the agent: `kubectl logs -f -l="app.kubernetes.io/instance=workspaces-agent" -n gitlab-agent-workspaces-agent`

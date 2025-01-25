@@ -14,7 +14,20 @@ This is to provide a stable, high-uptime (read: not GDK) installation of GitLab 
 
 - You should have some domain to use, and proper authorization to set it up according to
   https://docs.gitlab.com/omnibus/settings/dns. In these docs, we'll use `example.com` as an example.
+- You need to manage SSL. You can let gitlab do it automatically via letsencrypt, but I purchased my own SSL cert.
+  So these instructions use the manual approach: https://docs.gitlab.com/omnibus/settings/ssl/#configure-https-manually
   
+# Ensure DNS resolves to server at standard port
+
+See https://docs.gitlab.com/omnibus/settings/ssl/
+
+Note that `gitlab.example.com` must resolve on standard ports (80/443) to work.
+
+- Ensure your domain has an `A` record for `gitlab.example.com`
+- Ensure that both port 80 and 443 resolve to `gitlab.example.com` in your router/firewall config.
+- Purchase an SSL cert for the host and configure it. See the
+  [configure HTTPS manually](#configure-https-manually) section below for details.
+
 # Install Gitlab
 
 - See https://about.gitlab.com/install/#ubuntu
@@ -31,9 +44,8 @@ This is to provide a stable, high-uptime (read: not GDK) installation of GitLab 
 ## Set up DNS
 
 - Follow https://docs.gitlab.com/omnibus/settings/dns
-- Note this is required for the initial LetsEncrypt certificate to work during installation
-- However, if you just want to access the server from your internal network,
-  you can add it to the `/etc/hosts` from your local machine.
+- If you want to access the server from your internal network,
+  you can add its internal network IP to to the `/etc/hosts` from your local machine with the `gitlab.example.com` entry.
 
 ## Install gitlab-ee package
 
@@ -41,11 +53,25 @@ This is to provide a stable, high-uptime (read: not GDK) installation of GitLab 
 - Pin the version to limit auto-updates: `sudo apt-mark hold gitlab-ee`
 - Show what packages are held back: `sudo apt-mark showhold`
 
+## Configure HTTPS manually
+
+- See https://docs.gitlab.com/omnibus/settings/ssl/#configure-https-manually
+- Edit `/etc/gitlab/gitlab.rb`, set `letsencrypt['enable'] = false`
+- Create the /etc/gitlab/ssl directory and copy your key and certificate there:
+```
+sudo mkdir -p /etc/gitlab/ssl
+sudo chmod 755 /etc/gitlab/ssl
+sudo cp gitlab.example.com.key gitlab.example.com.crt /etc/gitlab/ssl/
+```
+- See
+  [the "SSL cert" section in the server hardware and network info page](./server_hardware_and_network_info.md)
+  for specific details.
+
 ## Configure KAS with fix for error
 
 NOTE: this may be a bug that gets fixed...
 
-- The following error came from ``:
+- The following error came from `sudo tail -f /var/log/gitlab/gitlab-kas/current` (I think, forgot to note it originally):
 ```
 2025-01-22_10:02:05.13902 {"time":"2025-01-22T02:02:05.138953742-08:00","level":"ERROR","msg":"Program aborted","error":"private API server: construct own private API multi URL: failed to parse OWN_PRIVATE_API_URL grpc://localhost:8155: ParseAddr(\"localhost\"): unable to parse IP"}
 ```
@@ -90,4 +116,6 @@ gitlab_kas['env'] = {
 - Status: `sudo gitlab-ctl status`
 - Console: `sudo gitlab-rails console`
 - Postgres console: `sudo gitlab-psql -d gitlabhq-production`
-- View production logs: `sudo tail -f /var/log/gitlab/gitlab-rails/production.log`
+- View rails production log: `sudo tail -f /var/log/gitlab/gitlab-rails/production.log`
+- View kas log: `sudo tail -f /var/log/gitlab/gitlab-kas/current`
+- Vieew agent logs: `k logs -f -l="app.kubernetes.io/instance=workspaces-agent" -n gitlab-agent-workspaces-agent`

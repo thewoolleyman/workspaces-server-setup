@@ -1,4 +1,4 @@
-# Server hardware and network info
+# Server hardware and comwork info
 
 # Table of contents
 
@@ -6,7 +6,7 @@
 
 # Overview
 
-NOTE: This info is very specific to my particular server, home network setup, and ISP
+NOTE: This info is very specific to my particular server, home comwork setup, and ISP
 
 # Server hardware info
 
@@ -36,6 +36,38 @@ because later steps will depend on them (e.g., all subsequent seteps assume that
 ## Add hosts entry to main development machine
 
 - Add `192.168.1.200 poweredge` to `/etc/hosts`
+
+# Internet port access
+
+## Set up port forwarding from external modem to internal router
+
+- Use xfinity app
+- Add TCP port forwarding `Archer_C2300` for ports `80` and `443`. These are required for access to the gitlab
+  installation. 
+
+## Set up port forwarding on internal router
+
+- Use http://192.168.1.1/webpages/login.html
+- Add NAT forwarding ("Virtual servers") for port 443 for TCP protocol to 192.168.1.200. 
+
+# DNS info
+
+- I use namecheap.com, with my own domain.
+
+# SSL cert
+
+- Purchased through namecheap.com
+- See https://www.namecheap.com/support/knowledgebase/article.aspx/794/67/how-do-i-activate-an-ssl-certificate/
+- Generate (or request) CSR: https://www.namecheap.com/support/knowledgebase/article.aspx/467/14/how-to-generate-csr-certificate-signing-request-code/ and https://www.namecheap.com/support/knowledgebase/article
+  - See https://www.namecheap.com/support/knowledgebase/article.aspx/9446/2290/generating-csr-on-apache-opensslmodsslnginx-heroku/
+- On server: `openssl req -new -newkey rsa:2048 -nodes -keyout gitlab.example.com.key -out gitlab.example.com.csr` (replace `example.com)
+- Use CSR, follow instructions on namecheap to generate and activate cert.
+- Backup CSR, key and cert in 1Password 
+- `scp` it to server when received in email, copy to `/etc/gitlab/ssl/new_positivessl`
+- unzip, ensure you concatenate certs into correct file, e.g.: `sudo bash -c 'cat gitlab_example_com.crt gitlab_example_com.ca-bundle > gitlab.example.com.crt'`
+- copy cert and key to `/etc/gitlab/ssl/gitlab.example.com.crt` and `/etc/gitlab/ssl/gitlab.example.com.key`
+- `sudo gitlab-ctl reconfigure`
+- `sudo gitlab-ctl restart`
 
 # Dynamic DNS Raspberry PI setup
 

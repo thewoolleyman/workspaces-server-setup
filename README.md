@@ -36,6 +36,10 @@ and all steps on each sub-page should be done in order. This is because some ste
 
 - [Server hardware and network info](./server_hardware_and_network_info.md)
 
+# Dynamic DNS Raspberry Pi setup
+
+- [Dynamic DNS Raspberry Pi setup](./dynamic_dns_raspberry_pi_setup.md)
+
 # Ubuntu OS installation
 
 - [Ubuntu OS installation](./ubuntu_os_installation.md)
