@@ -22,6 +22,20 @@ This section contains instructions on setting up a Workspaces agent on the clust
 - Create a project `workspaces-agents`.
 - In project, go to: Operate -> Kuberenetes clusters
 - Connect a cluster
+- Create an agent config file at `.gitlab/agents/workspaces-agent/config.yaml`:
+```
+remote_development:
+  dns_zone: "workspaces.gitlab.example.com"
+  network_policy:
+    enabled: true
+    egress:
+      - allow: "0.0.0.0/0"
+        except:
+          - "10.0.0.0/8"
+          - "172.16.0.0/12"
+          - "192.168.0.0/16"
+
+```  
 - Under "Option 2: Create and register an agent...", type `workspaces-agent`
 - After the agent is created, select `Create token`
 - Create a token with name `workspaces agent token`
@@ -49,3 +63,9 @@ helm upgrade --install workspaces-agent gitlab/gitlab-agent \
 ```
 
 - Verify - see logs for the agent: `kubectl logs -f -l="app.kubernetes.io/instance=workspaces-agent" -n gitlab-agent-workspaces-agent`
+
+# Map agent to group
+
+- Go to `workspaces-dogfooding` group
+- Settings -> Workspaces
+- All agents -> Allow

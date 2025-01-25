@@ -118,4 +118,5 @@ gitlab_kas['env'] = {
 - Postgres console: `sudo gitlab-psql -d gitlabhq-production`
 - View rails production log: `sudo tail -f /var/log/gitlab/gitlab-rails/production.log`
 - View kas log: `sudo tail -f /var/log/gitlab/gitlab-kas/current`
-- Vieew agent logs: `k logs -f -l="app.kubernetes.io/instance=workspaces-agent" -n gitlab-agent-workspaces-agent`
+- View agent logs: `k logs -f -l="app.kubernetes.io/instance=workspaces-agent" -n gitlab-agent-workspaces-agent`
+- Location of source code: `/opt/gitlab/embedded/service/gitlab-rails/`
