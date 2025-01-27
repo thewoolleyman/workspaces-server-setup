@@ -21,12 +21,19 @@ This is to provide a stable, high-uptime (read: not GDK) installation of GitLab 
 
 See https://docs.gitlab.com/omnibus/settings/ssl/
 
-Note that `gitlab.example.com` must resolve on standard ports (80/443) to work.
+Note that `gitlab.example.com` must resolve on standard port (443) to work.
 
 - Ensure your domain has an `A` record for `gitlab.example.com`
-- Ensure that both port 80 and 443 resolve to `gitlab.example.com` in your router/firewall config.
+- Ensure that both port 443 resolves to `gitlab.example.com` in your router/firewall config.
+  - NOTE: We are only serving on port 443, we will not configure gitlab to serve on http port 80.
 - Purchase an SSL cert for the host and configure it. See the
   [configure HTTPS manually](#configure-https-manually) section below for details.
+
+## Note on gitlab port
+
+- Later, when we [setup the gitlab workspaces proxy](./workspaces_agent_setup.md#setup-gitlab-workspaces-proxy),
+  we will change the GitLab default port from `443` to `11443`, and set up an nginx-based hostname-based proxy to route
+  incoming traffic to gitlab.
 
 # Install Gitlab
 

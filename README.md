@@ -79,9 +79,12 @@ sudo apt-get install helm
 
 - [Workspaces agent setup](./workspaces_agent_setup.md)
 
-# Other various setup documentation
+# Other various workspaces-related setup documentation
 
 ## Eclipe Che setup
+
+Eclipse Che is a primary open-source example of implementing the devfile specification which GitLab workspaces uses,
+so it is useful to be familiar with its installation and behavior.
 
 - [Ubuntu dual boot setup](./ubuntu_dual_boot_setup.md)
 - [Eclipse Che setup](./eclipse_che_setup.md)

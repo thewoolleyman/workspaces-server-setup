@@ -10,6 +10,18 @@ This doc contains instructions starting from the point that Ubuntu is installed 
 up to the point that basic server OS and applications are set up to support basic server access and
 installation/operation of kubernetes and necessary kubernetes workloads.
 
+## Make vim arrow and delete keys work
+
+TODO: Maybe this works, maybe not? And it doesn't fix (or maybe breaks) delete. Need a vim expert to help...
+
+- `vi ~/.vimrc`
+- Add:
+```
+set nocompatible
+set esckeys
+```
+- Do this for every user that uses vim.
+
 ## No-password sudo
 
 - `sudo visudo`
