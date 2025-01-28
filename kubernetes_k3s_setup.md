@@ -58,7 +58,8 @@ Created symlink /etc/systemd/system/multi-user.target.wants/k3s.service → /etc
 - Run the following as non-root user (`cwoolley`)
 - `mkdir -p ~/.kube`  
 - `sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config`
-- `sudo chown $USER:$USER ~/.kube/config`  
+- `sudo chown $USER:$USER ~/.kube/config`
+- Set `export KUBECONFIG=/home/cwoolley/.kube/config` in `.bashrc` (see https://docs.k3s.io/cli):
 - Verify: `kubectl get nodes`
 ```
 NAME        STATUS   ROLES                  AGE   VERSION

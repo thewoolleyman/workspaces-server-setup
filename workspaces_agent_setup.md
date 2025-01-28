@@ -62,11 +62,37 @@ helm upgrade --install workspaces-agent gitlab/gitlab-agent \
     --set "extraArgs={--kas-tls-server-name=gitlab.example.com,--kas-insecure-skip-tls-verify}"
 ```
 
-- Verify - see logs for the agent: `kubectl logs -f -l="app.kubernetes.io/instance=workspaces-agent" -n gitlab-agent-workspaces-agent`
+- Verify logs for the agent: `kubectl logs -f -l="app.kubernetes.io/instance=workspaces-agent" -n gitlab-agent-workspaces-agent`
 
 # Setup GitLab Workspaces proxy
 
 - See https://docs.gitlab.com/17.8/ee/user/workspace/set_up_workspaces_proxy.html
+
+## Install an ingress controller in k3s
+
+- We previously had to disable the default k3s traefik ingress controller, so we need to set up a
+  an nginx ingress controller
+- Add the nginx ingress helm repository: `helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx`
+- Update helm repos: `helm repo update`
+- Install nginx ingress controller:
+```
+helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx \
+  --create-namespace \
+  --set controller.service.type=LoadBalancer \
+  --set controller.service.ports.https=31443 \
+  --set controller.service.externalTrafficPolicy=Local \
+  --set controller.service.enableHttp=false
+```
+- Verify ingress controller pods are running: `kubectl get pods -n ingress-nginx`
+- Get pod IP with `kubectl get svc -n ingress-nginx`:
+```
+NAME                                 TYPE           CLUSTER-IP     EXTERNAL-IP   PORT(S)           AGE
+ingress-nginx-controller             LoadBalancer   10.43.221.2    <pending>     31443:30606/TCP   8s
+ingress-nginx-controller-admission   ClusterIP      10.43.190.97   <none>        443/TCP           8s
+```
+- `curl -k https://localhost:30443` (should be a 404)
+- If you need to uninstall: `helm uninstall ingress-nginx --namespace ingress-nginx`
 
 ## Set up required DNS records
 
@@ -100,21 +126,22 @@ tcp        0      0 0.0.0.0:11443           0.0.0.0:*               LISTEN      
   - `sudo ssh -L 443:localhost:11443 username@poweredge` (`poweredge` is local server hostname)
   - Open https://localhost/ (ignore cert error)
 
-### Set up nginx as a hostname-based proxy
+### Set up nginx as a hostname-based reverse proxy
 
 - Install nginx: `sudo apt install -y nginx libnginx-mod-stream`
 - Verify stream module: `nginx -V 2>&1 | grep with-stream`
 - Create config file: `sudo vi /etc/nginx/nginx.conf`
-- Add this entry to the top level of the config. NOTE: Later, you will replace 10.42.0.0 with the actual proxy ingress
-  IP, but for now we are just getting nginx reverse proxy working for gitlab's port 443:
+- Add this entry to the top level of the config:
 ```
 # TLS SNI routing - forward traffic based on hostname without decryption, to either gitlab, or gitlab workspaces proxy
 # Get the proper IP for the gitlab workspaces proxy.
+# Note that `hostnames` is required for the wildcard domain to work!!!
 stream {
   map $ssl_preread_server_name $backend {
+    hostnames;
     gitlab.example.com                    127.0.0.1:11443;
-    workspaces.gitlab.example.com         10.42.0.0:443;
-    *.workspaces.gitlab.example.com       10.42.0.0:443;
+    workspaces.gitlab.example.com         127.0.0.1:31443;
+    *.workspaces.gitlab.example.com       127.0.0.1:31443;
   }
 
   server {
@@ -126,6 +153,8 @@ stream {
 ```
 - Test the config: `sudo nginx -t`
 - Reload nginx: `sudo systemctl reload nginx`
+- Tail logs via journalctl: `journalctl -u nginx.service -f`
+- Tail logs directly: `tail -f /var/log/nginx/*.log`
 
 ## Generate TLS certificates
 
@@ -174,6 +203,7 @@ export CLIENT_SECRET="your_application_secret"
 export REDIRECT_URI="https://workspaces.example.com/auth/callback"
 export SIGNING_KEY="this-is-my-signing-key-there-are-many-others-like-it-but-this-is-mine"
 export SSH_HOST_KEY="/root/.ssh/workspaces-gitlab-example-com-ssh-host-key"
+export SSH_PORT="4222"
 ```
 - `chmod +x ./export_proxy_env_vars.sh`
 - `source ./export_proxy_env_vars.sh`
@@ -190,6 +220,7 @@ export SSH_HOST_KEY="/root/.ssh/workspaces-gitlab-example-com-ssh-host-key"
 ```
 kubectl create secret generic gitlab-workspaces-proxy-config \
   --namespace="gitlab-workspaces" \
+  --from-literal="ssh.port=${SSH_PORT}" \
   --from-literal="auth.client_id=${CLIENT_ID}" \
   --from-literal="auth.client_secret=${CLIENT_SECRET}" \
   --from-literal="auth.host=${GITLAB_URL}" \
@@ -224,15 +255,19 @@ kubectl create secret tls gitlab-workspace-proxy-wildcard-tls \
 ### Install the helm chart
 
 - Ensure you are the root user and have sourced `./export_proxy_env_vars.sh`
-- `export KUBECONFIG=/etc/rancher/k3s/k3s.yaml` (needed because you are root, not sure why kubectl works)
+- Add `export KUBECONFIG=/etc/rancher/k3s/k3s.yaml` to `.bashrc`, and source it.
 - `helm repo add gitlab-workspaces-proxy https://gitlab.com/api/v4/projects/gitlab-org%2fworkspaces%2fgitlab-workspaces-proxy/packages/helm/devel`
 - `helm repo update`
-- Run the helm upgrade command:
+- Run the helm upgrade command. Note we have to run ssh daemon at a nonstandard port `4222` otherwise it will
+  override the real ssh service on the host server, and we won't be able to log in via ssh anymore
+  (notice this by ssh host keys and auth failing and `sudo tail -f /var/log/auth.log` showing no activity)
 ```
 helm upgrade --install gitlab-workspaces-proxy \
   gitlab-workspaces-proxy/gitlab-workspaces-proxy \
   --version=0.1.16 \
-  --namespace="gitlab-workspaces" \
+  --namespace=gitlab-workspaces \
+  --create-namespace \
+  --set="sshService.port=${SSH_PORT}" \
   --set="ingress.enabled=true" \
   --set="ingress.hosts[0].host=${GITLAB_WORKSPACES_PROXY_DOMAIN}" \
   --set="ingress.hosts[0].paths[0].path=/" \
@@ -246,28 +281,31 @@ helm upgrade --install gitlab-workspaces-proxy \
   --set="ingress.tls[1].secretName=gitlab-workspace-proxy-wildcard-tls" \
   --set="ingress.className=nginx"
 ```
+- Verify `kubectl get svc -n gitlab-workspaces`:
+```
+NAME                          TYPE           CLUSTER-IP     EXTERNAL-IP     PORT(S)          AGE
+gitlab-workspaces-proxy       ClusterIP      10.43.214.49   <none>          80/TCP           2m54s
+gitlab-workspaces-proxy-ssh   LoadBalancer   10.43.78.230   192.168.1.200   4222:32068/TCP   2m54s
+```
 - Verify `kubectl -n gitlab-workspaces get ingress`:
 ```
-NAME                      CLASS   HOSTS                                                                       ADDRESS   PORTS     AGE
-gitlab-workspaces-proxy   nginx   workspaces.gitlab.example.com,*.workspaces.gitlab.example.com             80, 443   58s
+NAMESPACE           NAME                      CLASS   HOSTS                                                                       ADDRESS         PORTS     AGE
+gitlab-workspaces   gitlab-workspaces-proxy   nginx   workspaces.gitlab.example.com,*.workspaces.gitlab.example.com   192.168.1.200   80, 443   68s
 ```
 - Verify `kubectl -n gitlab-workspaces get pods`:
 ```
 NAME                                       READY   STATUS    RESTARTS   AGE
 gitlab-workspaces-proxy-6899f4bbbb-9lgjs   1/1     Running   0          109s
 ```
-
-
-## Update the nginx reverse proxy to point to the actual gitlab workspaces proxy IP
-
-- Get pod IP with `kubectl get pods -n gitlab-workspaces -o jsonpath='{.items[*].status.podIP}'`
-- Edit nginx config file: `sudo vi /etc/nginx/nginx.conf`
-- Change the workspaces IPs to the actual pod IP.
-- Test the config: `sudo nginx -t`
-- Reload nginx: `sudo systemctl reload nginx`
+- If you need to uninstall: `helm uninstall gitlab-workspaces-proxy -n gitlab-workspaces`
 
 # Map agent to group
 
 - Go to `workspaces-dogfooding` group
 - Settings -> Workspaces
 - All agents -> Allow
+
+# Create a workspace and verify you can connect to it
+
+- Go to https://gitlab.example.com/-/remote_development/workspaces/
+- Create a workspace for 
