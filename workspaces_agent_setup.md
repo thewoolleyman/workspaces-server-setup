@@ -305,7 +305,60 @@ gitlab-workspaces-proxy-6899f4bbbb-9lgjs   1/1     Running   0          109s
 - Settings -> Workspaces
 - All agents -> Allow
 
+# Create a project for workspace
+
+- Go to `workspaces-dogfooding` group
+- Create a project `example-devfiles`.
+- Create a file `devfile-example-sshd-http-app.yaml` with this content:
+```
+schemaVersion: 2.2.0
+components:
+  - name: tooling-container
+    attributes:
+      gl/inject-editor: true
+    container:
+      image: registry.gitlab.com/gitlab-org/workspaces/examples/example-sshd-http-app:latest
+      endpoints:
+        - name: http-8000
+          targetPort: 8000
+```
+
 # Create a workspace and verify you can connect to it
 
+## Create workspace
+
+- See https://docs.gitlab.com/17.8/ee/user/workspace/configuration.html#create-a-workspace
 - Go to https://gitlab.example.com/-/remote_development/workspaces/
-- Create a workspace for 
+- In left nav, click "Search or go to -> Your work -> Workspaces"   
+- Create a workspace for the `workspaces-dogfooding/example-devfiles` project
+- The `workspaces-agent` agent should be available and auto-selected
+- Enter devfile location as `devfile-example-sshd-http-app.yaml`
+- Click `Create workspace` and wait for it to be running
+  
+## Verify you can connect to workspace via HTTPS
+
+- Click `Open workspace`
+- The automatic oauth should happen properly (using `workspaces.example.com`) and the workspace
+  should come up with a valid SSL cert (using `*.workspaces.example.com`).
+
+## Verify you can connect to workspace via SSH
+
+- See: https://docs.gitlab.com/17.8/ee/user/workspace/configuration.html#connect-to-a-workspace-with-ssh
+- At https://gitlab.example.com/-/user_settings/personal_access_tokens, create a personal access token
+  with scope `read_api`. This is your workspaces SSH password. Save it in 1Password.   
+- Get the name of the workspace from the workspaces list accessed above (or the URL of the workspace)
+- The workspaces SSH host is `<workspace_name>@<ssh_proxy_IP_address>`
+- From the server, run `kubectl -n gitlab-workspaces get service gitlab-workspaces-proxy-ssh`
+```
+NAME                          TYPE           CLUSTER-IP     EXTERNAL-IP     PORT(S)          AGE
+gitlab-workspaces-proxy-ssh   LoadBalancer   10.43.78.230   192.168.1.200   4222:32068/TCP   50m
+```  
+- Get the external IP (e.g. `192.168.1.200`) and `sshService` port. The port is the one to the left of the colon,
+  which you used for `SSH_PORT` above, e.g. `4222`  
+- From a client terminal, run an SSH command: `ssh workspace-1-1-w7mqhh@192.168.1.200 -p 4222`
+- Enter your access token as the password
+- See that you are successfully connected:
+```
+gitlab-workspaces@workspace-1-1-w7mqhh-87c456b9b-k654x:~$ hostname
+workspace-1-1-w7mqhh-87c456b9b-k654x
+```
