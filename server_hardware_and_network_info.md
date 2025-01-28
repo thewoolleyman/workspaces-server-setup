@@ -42,13 +42,13 @@ because later steps will depend on them (e.g., all subsequent seteps assume that
 ## Set up port forwarding from external modem to internal router
 
 - Use xfinity app
-- Add TCP port forwarding `Archer_C2300` for ports `80` and `443`. These are required for access to the gitlab
-  installation. 
+- Add TCP port forwarding `Archer_C2300` for ports `443` and `4222`. These are required for access to the gitlab
+  installation and workspaces SSH, respectively. 
 
 ## Set up port forwarding on internal router
 
 - Use http://192.168.1.1/webpages/login.html
-- Add NAT forwarding ("Virtual servers") for port 443 for TCP protocol to 192.168.1.200. 
+- Add NAT forwarding ("Virtual servers") for port `443` and `4222` for TCP protocol to 192.168.1.200. 
 
 # DNS info
 

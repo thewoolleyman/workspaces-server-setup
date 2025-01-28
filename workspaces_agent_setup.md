@@ -362,3 +362,5 @@ gitlab-workspaces-proxy-ssh   LoadBalancer   10.43.78.230   192.168.1.200   4222
 gitlab-workspaces@workspace-1-1-w7mqhh-87c456b9b-k654x:~$ hostname
 workspace-1-1-w7mqhh-87c456b9b-k654x
 ```
+- If you have [opened port `4222`](./server_hardware_and_network_info.md#internet-port-access) externally, you can
+  connect to the externally bound hostname, e.g.: `ssh workspace-1-1-w7mqhh@workspaces.gitlab.example.com -p 4222`
