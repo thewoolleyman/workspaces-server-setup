@@ -71,6 +71,10 @@ There's two separate versions:
 
 - [Workspaces agent setup](./workspaces_agent_setup.md)
 
+# JetBrains Gateway setup
+
+- [JetBrains Gateway setup](./jetbrains_gateway_setup.md)
+
 # Other various workspaces-related setup documentation
 
 ## Eclipe Che setup

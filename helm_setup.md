@@ -1,4 +1,4 @@
-# Kubernetes Full setup
+# Helm setup
 
 # Table of contents
 
