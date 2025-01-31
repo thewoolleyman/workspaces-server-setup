@@ -370,6 +370,7 @@ workspace-1-1-w7mqhh-87c456b9b-k654x
 - Go to https://gitlab.com/gitlab-org/workspaces/testing/gitlab-agent-configurations
 - Create an agent using the same steps above in [create agent](#create-agent), but substitute the name
   `workspaces-agent` with `z-please-do-not-use-cwoolley-home-dogfooding-server`
-- Note that the `z-please-do-not-use` prefix is a hack to make it show up at the bottom of the list,
+- Note 1: that the `z-please-do-not-use` prefix is a hack to make it show up at the bottom of the list,
   because the current agent authorization scheme does not support restricting access to a mapped agent
   for users who inherit `Developer` access from the parent group (`gitlab-org` in this case).
+- Note 2: The `config.kasAddress` in the `helm` command will be `wss://kas.gitlab.com`
