@@ -51,7 +51,8 @@ helm upgrade --install workspaces-agent gitlab/gitlab-agent \
     --set config.token=YOUR_TOKEN_VALUE \
     --set config.kasAddress=wss://127.0.0.1/-/kubernetes-agent/
 ```
-- NOTE: My server is not connected to the internet, so it needs some special configs:
+- NOTE: If your gitlab server is not connected to the internet, the helm command needs some special config in `extraArgs`
+  (NOTE: not fully tested, I subsequently connected my server to the internet):
 ```
 helm upgrade --install workspaces-agent gitlab/gitlab-agent \
     --namespace gitlab-agent-workspaces-agent \
@@ -367,10 +368,48 @@ workspace-1-1-w7mqhh-87c456b9b-k654x
 
 # Make agent usable from gitlab.com
 
+TODO: Incomplete...
+
+## Create agent for gitlab.com
+
 - Go to https://gitlab.com/gitlab-org/workspaces/testing/gitlab-agent-configurations
 - Create an agent using the same steps above in [create agent](#create-agent), but substitute the name
-  `workspaces-agent` with `z-please-do-not-use-cwoolley-home-dogfooding-server`
-- Note 1: that the `z-please-do-not-use` prefix is a hack to make it show up at the bottom of the list,
-  because the current agent authorization scheme does not support restricting access to a mapped agent
-  for users who inherit `Developer` access from the parent group (`gitlab-org` in this case).
-- Note 2: The `config.kasAddress` in the `helm` command will be `wss://kas.gitlab.com`
+  `workspaces-agent` with `z-please-do-not-use-cwoolley-dogfooding-server`
+  - Note 1: that the `z-please-do-not-use-` prefix is a hack to make it show up at the bottom of the list,
+    because the current agent authorization scheme does not support restricting access to a mapped agent
+    for users who inherit `Developer` access, if I ever map this agent from the parent group (`gitlab-org` in this case),
+    so that it is usable for all my projects under `gitlab-org` group.
+  - Note 2: The `config.kasAddress` in the `helm` command will be `wss://kas.gitlab.com`
+- Verify it is running: `kubectl logs -f -l="app.kubernetes.io/instance=z-please-do-not-use-cwoolley-dogfooding-server" -n gitlab-agent-z-please-do-not-use-cwoolley-dogfooding-server`
+
+## Map agent on gitlab.com
+
+- Go to group: https://gitlab.com/gitlab-org/workspaces
+- Settings -> Workspaces -> All agents
+- Allow the `z-please-do-not-use-cwoolley-dogfooding-server` agent
+
+## Set up a new gitlab-workspaces-proxy for gitlab.com
+
+TODO: Figure out if this is possible. Maybe if I override `configSecretName` to point at a new secret `gitlab-workspaces-proxy-config-gitlab-com` with the gitlab.com host/oauth/etc config, and install the proxy helm chart with a new name like `gitlab-workspaces-proxy-gitlab-com` pointing to that secret, and with different service ports for ssh/https,  so I have two proxies? Would this just work?
+
+## Test agent on gitlab.com
+
+Since I don't have authorization to the `gitlab-org` group to map the agent, I need to create the workspace from a group
+or a subgroup where the agent is mapped, which is at the `gitlab-org/workspaces` group level.
+
+### Test with example-jetbrains-gateway project
+
+- Go to https://gitlab.com/gitlab-org/workspaces/examples/example-jetbrains-gateway
+- Pick `Edit -> New Workspace`
+- In the workspace creation dialog, select the `z-please-do-not-use-cwoolley-dogfooding-server` agent
+- Create the workspace
+
+### Test with gitlab project
+
+- Create a new private group `cwoolley-testing` under `gitlab-org/workspaces/testing`
+- Fork https://gitlab.com/gitlab-org/workspaces/examples/example-jetbrains-gateway project under
+  https://gitlab.com/gitlab-org/workspaces/testing/cwoolley-testing  
+- In the new forked project at https://gitlab.com/gitlab-org/workspaces/testing/cwoolley-testing/example-jetbrains-gateway,
+  pick `Edit -> New Workspace`
+- In the workspace creation dialog, select the `z-please-do-not-use-cwoolley-dogfooding-server` agent
+- Create the workspace
