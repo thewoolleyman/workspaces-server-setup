@@ -1,4 +1,4 @@
-# Server hardware and comwork info
+# Server hardware and network info
 
 # Table of contents
 
@@ -22,7 +22,13 @@ NOTE: This info is very specific to my particular server, home comwork setup, an
 
 - Home routers and subnets:
     - External modem/router subnet: `10.0.0.0` (XFinity model CGM4981COM modem/router - admin webpage http://10.0.0.1/)
-    - Internal router subnet (all home machines): `192.168.1.0` (TP-Link Archer - admin webpage http://192.168.1.1/webpages/login.html)
+      - To manage port forwards in Xfinity app:
+        - `WiFi` icon at bottom
+        - `View WiFi equipment`
+        - `Advanced Settings`
+        - `Port Forwarding`
+        - `Add port Forward` or `Edit` existing forwarded device (e.g. `Archer_C2300`)
+    - Internal router subnet (all home machines): `192.168.1.0` (TP-Link Archer C2300 - admin webpage http://192.168.1.1/webpages/login.html)
     - All admin passwords in 1password
 - Main development machine `192.168.1.111`
 - `poweredge` server: `192.168.1.200`, connected to `eno1`, MAC `14:18:77:57:75:36`
@@ -41,7 +47,7 @@ because later steps will depend on them (e.g., all subsequent seteps assume that
 
 ## Set up port forwarding from external modem to internal router
 
-- Use xfinity app
+- Use Xfinity app (see detailed instructions above in [Network info](#network-info) section)
 - Add TCP port forwarding `Archer_C2300` for ports `443` and `4222`. These are required for access to the gitlab
   installation and workspaces SSH, respectively. 
 
