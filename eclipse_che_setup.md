@@ -252,6 +252,7 @@ ssh -L 443:192.168.59.xxx:443 geekom
 - `minikube stop`
 - `minikube start --addons=ingress,dashboard --vm=true --memory=10240 --cpus=4 --disk-size=50GB --kubernetes-version=v1.23.9`
 - `minikube start --v=10`
+- `minikube stop`
 
 # Notes on Che
 
@@ -259,6 +260,8 @@ ssh -L 443:192.168.59.xxx:443 geekom
 
 - Check server status: `chectl server:status`
 - Set up port forward from local client: `sudo ssh -L 443:192.168.59.xxx:443 cwoolley@geekom`
+- Open Che dashboard: `chectl dashboard:open`
+- Stop the server: `chectl server:stop`
 
 ## Inspecting Che's init container
 
